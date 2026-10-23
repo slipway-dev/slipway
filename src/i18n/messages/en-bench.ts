@@ -106,6 +106,8 @@ export const enBench = {
       pass: "pass",
       fail: "fail",
       unknown: "unknown",
+      nopBlocked: "nop blocked",
+      nopLeaks: "nop passes too",
       ok: "done",
       error: "stops here",
       skipped: "not reached",

@@ -57,7 +57,7 @@ export function CheckBadges({ oracle, nop }: { oracle?: CheckResult; nop?: Check
           icon={nop.status === "fail" ? CircleCheck : nop.status === "pass" ? TriangleAlert : CircleHelp}
           title={reason(nop.reason)}
         >
-          {t.nop} {t[nop.status]}
+          {nop.status === "fail" ? t.nopBlocked : nop.status === "pass" ? t.nopLeaks : `${t.nop} ${t.unknown}`}
         </Chip>
       )}
     </span>

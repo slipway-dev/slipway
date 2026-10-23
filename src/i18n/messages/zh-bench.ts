@@ -103,6 +103,8 @@ export const zhBench: BenchMessages = {
       pass: "通过",
       fail: "失败",
       unknown: "未知",
+      nopBlocked: "nop 被拦住",
+      nopLeaks: "nop 也能通过",
       ok: "完成",
       error: "到此为止",
       skipped: "未执行",

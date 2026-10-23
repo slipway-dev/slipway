@@ -34,7 +34,7 @@ export function InstructionLivePane({ project }: { project: TaskProject }) {
   const t = useT().workbench.instruction
   const hints = instructionHints(project)
   return (
-    <div className="flex h-full min-h-0 flex-col gap-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <section className="flex min-h-48 flex-1 flex-col gap-2">
         <h3 className="font-semibold">{t.agentSees}</h3>
         <p className="text-body-sm text-ink-muted">{t.agentSeesHelp}</p>
@@ -96,7 +96,7 @@ export function EnvironmentLivePane({
   const folders = [...simulation.initial.dirs].filter((d) => d !== "/").sort()
 
   return (
-    <div className="flex h-full min-h-96 flex-col gap-4">
+    <div className="flex min-h-96 flex-1 flex-col gap-4">
       <div role="tablist" className="flex w-fit rounded-lg border border-line bg-surface p-0.5">
         {(["dockerfile", "starting"] as const).map((id) => (
           <button
@@ -112,7 +112,7 @@ export function EnvironmentLivePane({
         ))}
       </div>
       {tab === "dockerfile" ? (
-        <div className="min-h-0 flex-1">
+        <div className="grid min-h-0 flex-1">
           <GeneratedFiles files={files.filter((f) => f.path.startsWith("environment/"))} onSelect={onSelect} />
         </div>
       ) : (

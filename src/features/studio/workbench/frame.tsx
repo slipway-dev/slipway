@@ -62,7 +62,7 @@ export function WorkbenchFrame({ part, wide, onBack, onViewSource, editor, live 
           <ResizableHandle />
           <ResizablePanel defaultSize="46" minSize={340} className="bg-surface-sunken">
             <div className="h-full overflow-y-auto">
-              <div className="min-w-0 p-4 lg:p-6">{live}</div>
+              <div className="flex min-h-full min-w-0 flex-col p-4 lg:p-6">{live}</div>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
