@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Author, TaskConfig } from "@/features/harbor/task-config"
 import type { TaskProject } from "@/features/task/model"
 import { useStudio } from "@/features/task/store"
+import { useT } from "@/i18n/provider"
 
 function Field({
   label,
@@ -66,7 +67,9 @@ function useParsedText<T>(value: T, format: (value: T) => string, parse: (text: 
 const DIFFICULTIES = ["easy", "medium", "hard"]
 
 export function SettingsForm({ project }: { project: TaskProject }) {
-  const updateProject = useStudio((s) => s.updateProject)
+  const t = useT()
+  const s = t.studio.settings
+  const updateProject = useStudio((st) => st.updateProject)
   const { config } = project
   const update = (fn: (config: TaskConfig) => void) => updateProject(project.id, (p) => fn(p.config))
   const task = config.task ?? { name: "" }
@@ -85,7 +88,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
           type="number"
           inputMode="numeric"
           value={(config[section] as Record<string, unknown> | undefined)?.[key] as number | undefined ?? ""}
-          placeholder="Harbor default"
+          placeholder={s.harborDefault}
           onChange={(e) =>
             update((c) => {
               const target = (c[section] ??= {}) as Record<string, unknown>
@@ -102,7 +105,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
     <div className="flex max-w-2xl flex-col gap-8">
       <section className="flex flex-col gap-4">
         <h3 className="text-label uppercase text-ink-muted">[task]</h3>
-        <Field label="Name" description='"org/name", the id Harbor and its registry use.'>
+        <Field label={s.name} description={s.nameHelp}>
           {(id) => (
             <Input
               id={id}
@@ -113,7 +116,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
             />
           )}
         </Field>
-        <Field label="Description">
+        <Field label={s.description}>
           {(id) => (
             <Textarea
               id={id}
@@ -122,7 +125,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
             />
           )}
         </Field>
-        <Field label="Authors" description="One per line, as Name <email>.">
+        <Field label={s.authors} description={s.authorsHelp}>
           {(id) => (
             <Textarea
               id={id}
@@ -134,7 +137,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
             />
           )}
         </Field>
-        <Field label="Keywords" description="Separated by commas.">
+        <Field label={s.keywords} description={s.keywordsHelp}>
           {(id) => (
             <Input
               id={id}
@@ -151,14 +154,14 @@ export function SettingsForm({ project }: { project: TaskProject }) {
       <section className="flex flex-col gap-4">
         <h3 className="text-label uppercase text-ink-muted">[metadata]</h3>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Difficulty">
+          <Field label={s.difficulty}>
             {(id) => (
               <Select
                 value={typeof config.metadata?.difficulty === "string" ? config.metadata.difficulty : undefined}
                 onValueChange={(v) => update((c) => void ((c.metadata ??= {}).difficulty = v))}
               >
                 <SelectTrigger id={id} className="w-full">
-                  <SelectValue placeholder="Not set" />
+                  <SelectValue placeholder={t.common.notSet} />
                 </SelectTrigger>
                 <SelectContent>
                   {DIFFICULTIES.map((d) => (
@@ -170,7 +173,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
               </Select>
             )}
           </Field>
-          <Field label="Category">
+          <Field label={s.category}>
             {(id) => (
               <Input
                 id={id}
@@ -184,11 +187,11 @@ export function SettingsForm({ project }: { project: TaskProject }) {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h3 className="text-label uppercase text-ink-muted">Timeouts (seconds)</h3>
+        <h3 className="text-label uppercase text-ink-muted">{s.timeouts}</h3>
         <div className="grid gap-4 sm:grid-cols-3">
-          {timeout("agent", "timeout_sec", "Agent")}
-          {timeout("verifier", "timeout_sec", "Verifier")}
-          {timeout("environment", "build_timeout_sec", "Image build")}
+          {timeout("agent", "timeout_sec", s.agent)}
+          {timeout("verifier", "timeout_sec", s.verifier)}
+          {timeout("environment", "build_timeout_sec", s.imageBuild)}
         </div>
       </section>
     </div>

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import type { ParamSpec, ParamValue } from "@/features/parts/types"
+import { useT } from "@/i18n/provider"
 
 import { CodeEditor } from "./code-editor"
 
@@ -84,6 +85,7 @@ interface ParamFieldProps {
 }
 
 export function ParamField({ spec, value, onChange }: ParamFieldProps) {
+  const t = useT()
   const id = useId()
   const describedBy = spec.description ? `${id}-desc` : undefined
 
@@ -110,7 +112,7 @@ export function ParamField({ spec, value, onChange }: ParamFieldProps) {
           type="number"
           inputMode="numeric"
           value={typeof value === "number" ? value : ""}
-          placeholder={spec.placeholder ?? "Not set"}
+          placeholder={spec.placeholder ?? t.common.notSet}
           aria-describedby={describedBy}
           onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
         />
@@ -120,7 +122,7 @@ export function ParamField({ spec, value, onChange }: ParamFieldProps) {
       control = (
         <Select value={typeof value === "string" ? value : undefined} onValueChange={onChange}>
           <SelectTrigger id={id} className="w-full" aria-describedby={describedBy}>
-            <SelectValue placeholder="Choose…" />
+            <SelectValue placeholder={t.common.choose} />
           </SelectTrigger>
           <SelectContent>
             {spec.options?.map((option) => (
@@ -163,7 +165,7 @@ export function ParamField({ spec, value, onChange }: ParamFieldProps) {
           onChange={onChange}
           format={formatList}
           parse={parseList}
-          placeholder={spec.placeholder ? `${spec.placeholder}\n(one per line)` : "One per line"}
+          placeholder={spec.placeholder ? `${spec.placeholder}\n${t.studio.params.onePerLineSuffix}` : t.studio.params.onePerLine}
         />
       )
       break
@@ -175,7 +177,7 @@ export function ParamField({ spec, value, onChange }: ParamFieldProps) {
           onChange={onChange}
           format={formatMap}
           parse={parseMap}
-          placeholder={"KEY=value\n(one per line)"}
+          placeholder={t.studio.params.mapPlaceholder}
         />
       )
       break
@@ -206,7 +208,7 @@ export function ParamField({ spec, value, onChange }: ParamFieldProps) {
     <div className="flex flex-col gap-2">
       <Label htmlFor={id}>
         {spec.label}
-        {spec.required && <span className="sr-only"> (required)</span>}
+        {spec.required && <span className="sr-only"> {t.studio.params.required}</span>}
       </Label>
       {control}
       {spec.description && (

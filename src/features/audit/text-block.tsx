@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 
+import { useT } from "@/i18n/provider"
 import { cn } from "@/lib/utils"
 
 interface TextBlockProps {
@@ -16,6 +17,7 @@ interface TextBlockProps {
 
 /** Long agent output, collapsed by default. Rendered as text, never as HTML. */
 export function TextBlock({ text, maxLines = 14, mono = false, code = false, className }: TextBlockProps) {
+  const t = useT().runs.trajectory
   const [expanded, setExpanded] = useState(false)
   const lines = text.split("\n")
   const long = lines.length > maxLines || text.length > maxLines * 160
@@ -39,7 +41,7 @@ export function TextBlock({ text, maxLines = 14, mono = false, code = false, cla
           onClick={() => setExpanded(!expanded)}
           className="rounded-sm text-body-sm text-tide underline-offset-4 hover:underline"
         >
-          {expanded ? "Show less" : `Show all ${lines.length} lines`}
+          {expanded ? t.showLess : t.showAll(lines.length)}
         </button>
       )}
     </div>

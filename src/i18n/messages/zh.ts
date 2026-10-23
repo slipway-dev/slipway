@@ -1,0 +1,231 @@
+import type { Messages } from "./en"
+import { zhParts } from "./zh-parts"
+import { zhRuns } from "./zh-runs"
+
+/**
+ * 简体中文界面文案。Harbor 术语（task、environment、verifier、solution、
+ * oracle、nop、trial、job 及文件名）保持英文；Launch 是产品动词，也保持原名。
+ */
+export const zh: Messages = {
+  meta: {
+    title: "Slipway — 可视化制作 Harbor task",
+    description:
+      "在浏览器里编写 instruction、拼装 environment 与 verifier，把一个想法做成可直接 harbor run 的 Harbor task。",
+    studio: "Studio",
+    runs: "Runs",
+    job: "Job",
+    trial: "Trial",
+  },
+
+  common: {
+    loading: "加载中…",
+    cancel: "取消",
+    delete: "删除",
+    copy: "复制",
+    copied: "已复制",
+    copyCommand: "复制命令",
+    notSet: "未设置",
+    choose: "请选择…",
+    close: "关闭",
+  },
+
+  nav: {
+    main: "主导航",
+    studio: "Studio",
+    runs: "Runs",
+    harborDocs: "Harbor 文档",
+    home: "Slipway 首页",
+    language: "语言",
+  },
+
+  home: {
+    tagline: "可视化地造 Harbor task，一键下水。",
+    lede: "Harbor task 就是一个文件夹：一份 instruction、一个 Dockerfile、一个测试脚本，外加可选的 solution。Slipway 把整个文件夹放在一屏里：叠加 environment 和 verifier 部件，每个文件都和它的生成结果并排编辑，最后 Launch 出一个 ",
+    ledeEnd: " 可以直接运行的文件夹。",
+    openStudio: "打开 Studio",
+    auditRuns: "审计一个 job 的 trajectory",
+    folderCaption: "Launch 写出的内容",
+    folderNotes: {
+      config: "名称、超时、网络策略",
+      instruction: "要求 agent 完成的任务",
+      dockerfile: "由 environment 部件叠加生成",
+      test: "写入 /logs/verifier/reward.txt",
+      solve: "由 oracle 运行，得 1 分",
+    },
+    thenRun: "然后在终端里运行",
+    expect1: "# 预期 1",
+    expect0: "# 预期 0",
+    footer: "Slipway 是 Harbor 的社区工具，与 Harbor 兼容，并非 Harbor 官方项目。",
+  },
+
+  taskList: {
+    title: "你的 task",
+    lede: "保存在当前浏览器中。把 task 文件夹、多个 task 的文件夹或 zip 拖到页面任意位置即可导入；文件只在本地读取，不会上传。",
+    importFolder: "导入文件夹",
+    importZip: "导入 .zip",
+    newTask: "新建 task",
+    newTaskTitle: "新建 task",
+    newTaskLede: "从一个能跑通的示例开始，或从 Harbor 的默认脚手架开始。",
+    loading: "正在加载 task…",
+    emptyTitle: "还没有 task",
+    emptyBody: "从模板新建一个，或从本机导入一个 Harbor task 文件夹。",
+    noInstruction: "尚未填写 instruction。",
+    edited: (when) => `编辑于 ${when}`,
+    deleteLabel: (name) => `删除 ${name}`,
+    confirmDelete: (name) => `删除 ${name}？此操作无法撤销。`,
+    nothingImported: "没有可导入的 task。",
+    imported: (n) => `已导入 ${n} 个 task`,
+    dropHere: "松开即可导入",
+    columns: { task: "Task", description: "描述", edited: "编辑时间" },
+    starters: {
+      "hello-world": {
+        name: "Hello, world",
+        summary: "一个完整的 task：agent 写一个文件，verifier 检查它，solution 证明它能通过。",
+      },
+      blank: {
+        name: "空白",
+        summary: "与 `harbor task init` 相同：一个 Ubuntu 镜像，加上空的 verifier 和 solution 脚本。",
+      },
+    },
+  },
+
+  studio: {
+    loading: "正在加载 task…",
+    notSaved: "当前浏览器中没有保存这个 task。",
+    backToTasks: "返回 task 列表",
+    launch: "Launch",
+    launched: (file) => `已 Launch ${file}`,
+    launchedWithErrors: (file, n) => `已 Launch ${file}，但还有 ${n} 个错误未解决。`,
+    panes: { files: "文件", edit: "编辑", checks: "检查" },
+    tree: {
+      label: "Task 文件夹",
+      addFile: "新建文件",
+      newFilePrompt: "新文件的路径（相对于 task 根目录）",
+      edited: "已改",
+      yours: "自建",
+      parts: (n) => `${n} 个部件`,
+    },
+    sections: {
+      instruction: { label: "Instruction", hint: "要求 agent 完成的任务。" },
+      environment: {
+        label: "Environment",
+        hint: "agent 工作所在的容器。部件会叠加生成 environment/Dockerfile 和 task.toml 的 [environment] 表。",
+      },
+      verifier: {
+        label: "Verifier",
+        hint: "在 agent 结束后运行，把 reward 写入 /logs/verifier/reward.txt。",
+      },
+      solution: { label: "Solution", hint: "由 oracle agent 运行，用来证明 task 可解。" },
+      settings: { label: "Task 设置", hint: "名称、元数据和超时。" },
+    },
+    generated: "生成结果",
+    generatedEmpty: "这一部分还没有生成任何文件。",
+    preview: "预览",
+    file: {
+      gone: (path) => `${path} 已不在这个 task 中。`,
+      fromPart: (name) => `来自部件「${name}」`,
+      writtenByYou: "由你编写",
+      fromConfig: "由 Task 设置和部件生成",
+      fromInstruction: "在 Instruction 中编写",
+      fromDockerfile: "由 environment 部件生成",
+      replaces: (what) => `已手动修改；替代了：${what}`,
+      executable: "可执行",
+      editIn: (where) => `在 ${where} 中编辑`,
+      openPart: "打开部件",
+      revert: "还原为生成内容",
+      deleteFile: "删除文件",
+      confirmDelete: (path) => `删除 ${path}？`,
+      editByHand: "手动编辑",
+      open: "打开文件",
+      handEditNote: "手动编辑后，部件将不再更新此文件，直到你还原它。",
+      binary: (kb) =>
+        `二进制文件，${kb} KB。Slipway 会逐字节保留，Launch 时原样写出；如需修改，请用你自己的工具编辑后重新导入。`,
+    },
+    blocks: {
+      empty: "还没有部件。",
+      reorder: (name) => `调整 ${name} 的顺序`,
+      more: (name) => `${name} 的更多操作`,
+      off: "已停用",
+      turnOn: "启用",
+      turnOff: "停用",
+      remove: "移除",
+      addPart: "添加部件",
+    },
+    picker: {
+      title: (section) => `添加到 ${section}`,
+      library: "部件库",
+      make: "自制部件",
+      yours: "自建",
+      roleTaken: (role) => `这个 task 已经有一个 ${role}`,
+      deleteCustom: (name) => `从你的部件中删除 ${name}`,
+      makeHelp:
+        "部件是一段 JSON：参数，加上它贡献的文件、Dockerfile 行和 task.toml 配置，用 {{param}} 模板书写。它保存在当前浏览器中，可以加到任何 task。",
+      manifest: "部件清单",
+      notJson: (detail) => `不是合法的 JSON：${detail}`,
+      wrongSlot: (slot) => `这个部件属于 ${slot}，请从那一部分打开部件库再添加。`,
+      saved: (name) => `已把 ${name} 保存到你的部件`,
+      resetExample: "重置示例",
+      saveAndAdd: "保存并添加",
+    },
+    params: {
+      required: "（必填）",
+      onePerLine: "每行一项",
+      onePerLineSuffix: "（每行一项）",
+      mapPlaceholder: "KEY=value\n（每行一项）",
+    },
+    settings: {
+      name: "名称",
+      nameHelp: "格式为「org/name」，Harbor 及其 registry 使用的 id。",
+      description: "描述",
+      authors: "作者",
+      authorsHelp: "每行一位，格式为 Name <email>。",
+      keywords: "关键词",
+      keywordsHelp: "用英文逗号分隔。",
+      difficulty: "难度",
+      category: "类别",
+      timeouts: "超时（秒）",
+      agent: "Agent",
+      verifier: "Verifier",
+      imageBuild: "镜像构建",
+      harborDefault: "Harbor 默认值",
+    },
+    checks: {
+      title: "检查",
+      counts: (errors, warnings) => `${errors} 个错误 · ${warnings} 个警告`,
+      clean: "未发现问题",
+      error: "错误",
+      warning: "警告",
+      showAll: "全部展开",
+      hide: "收起",
+      verify: "用 Harbor 验证",
+      verifyHelp: "解压 Launch 出的 task，分别运行两个 agent。合格的 task 有 solution 时得 1 分，没有时得 0 分。",
+      expects1: "预期 1",
+      expected0: "预期 0",
+      unverified: "未验证",
+    },
+  },
+
+  runs: zhRuns,
+
+  issues: {
+    "task-name": "Task 名称必须是「org/name」格式，例如「my-org/hello-world」。",
+    "empty-instruction": "instruction.md 为空，agent 拿不到任何任务。",
+    "no-environment": "没有 environment：请添加基础镜像、environment/Dockerfile 或 [environment].docker_image。",
+    "dockerfile-from": "environment/Dockerfile 缺少 FROM 行。",
+    "solution-leak": "Dockerfile 把 solution 复制进了镜像，任何 agent 都能读到它，nop 也可能得分大于 0。",
+    "tests-leak": "Dockerfile 把测试复制进了镜像；Harbor 会在 agent 结束后自动把 tests/ 复制到 /tests。",
+    "pip-without-python":
+      "在普通 Ubuntu/Debian 镜像上使用了 pip，但这类镜像没有 pip。请换用 python 基础镜像，或安装 python3-pip。",
+    "no-verifier": "缺少 tests/test.sh：请添加 verifier，Harbor 才能给 task 打分。",
+    "missing-reward":
+      "tests/test.sh 从未写入 /logs/verifier/reward.txt 或 reward.json，所有 trial 都将无法评分。",
+    "rewards-json": "Harbor 读取的是 /logs/verifier/reward.json（单数），rewards.json 会被忽略。",
+    "verifier-offline":
+      "tests/test.sh 会下载工具，但 verifier 没有网络，所有 trial 都会得 0 分。请允许 verifier 联网（网络策略），或把测试工具装进镜像。",
+    shebang: "tests/test.sh 缺少 #! 行。",
+    "no-solution": "缺少 solution/solve.sh：oracle agent 无法证明 task 可解。",
+    "empty-solution": "solution/solve.sh 还没有命令，oracle 会得 0 分。",
+  },
+
+  parts: zhParts,
+}

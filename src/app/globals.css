@@ -119,8 +119,8 @@
 
   --shadow-drag: var(--shadow-drag);
 
-  --font-sans: var(--font-schibsted), "Noto Sans SC", system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), "Noto Sans Mono", ui-monospace, monospace;
+  --font-sans: var(--font-schibsted), var(--font-noto-sc), "Noto Sans SC", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), var(--font-noto-sc), "Noto Sans Mono", ui-monospace, monospace;
 
   --text-display-xl: 56px;
   --text-display-xl--line-height: 60px;
@@ -157,6 +157,21 @@
   kbd,
   pre {
     @apply font-mono;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--tide) 28%, transparent);
+  }
+  input,
+  textarea {
+    caret-color: var(--signal);
+  }
+  /* Numbers in tables, counts and timings line up. */
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+  * {
+    scrollbar-color: var(--line-strong) transparent;
   }
 }
 

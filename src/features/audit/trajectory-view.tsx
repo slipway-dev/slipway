@@ -11,6 +11,9 @@ import { annotationKey } from "@/features/runs/store"
 import type { FileSet } from "@/features/runs/files"
 import type { Step, Trajectory } from "@/features/runs/types"
 
+import { useT } from "@/i18n/provider"
+import { cn } from "@/lib/utils"
+
 import { SeverityGlyph } from "./status"
 import { StepCard } from "./step-card"
 
@@ -37,6 +40,8 @@ interface TrajectoryViewProps {
 }
 
 export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir, files }: TrajectoryViewProps) {
+  const t = useT().runs.trajectory
+  const tj = useT().runs.job
   const [path, setPath] = useState<string[]>([])
   const [onlyFlagged, setOnlyFlagged] = useState(false)
   const [query, setQuery] = useState("")
@@ -62,7 +67,7 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
   return (
     <div className="flex flex-col gap-4">
       {path.length > 0 && (
-        <nav aria-label="Subagents" className="flex flex-wrap items-center gap-1 text-body-sm">
+        <nav aria-label={t.subagents} className="flex flex-wrap items-center gap-1 text-body-sm">
           <button type="button" className="text-tide underline-offset-4 hover:underline" onClick={() => setPath([])}>
             {root.agent.name}
           </button>
@@ -81,20 +86,20 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
         </nav>
       )}
 
-      <dl className="flex flex-wrap gap-x-6 gap-y-2 text-body-sm">
+      <dl className="flex flex-wrap gap-x-6 gap-y-2 border-y border-line py-3 text-body-sm">
         {[
-          ["Agent", `${current.agent.name}${current.agent.version ? ` ${current.agent.version}` : ""}`],
-          ["Model", current.agent.model_name ?? "—"],
-          ["Steps", String(stats.steps)],
-          ["Tool calls", String(stats.toolCalls)],
-          ["Tokens", `${formatTokens(stats.promptTokens)} in · ${formatTokens(stats.completionTokens)} out`],
-          ["Cost", formatCost(stats.costUsd)],
-          ["Span", formatDuration(stats.durationSec)],
-          ["Format", current.schema_version ?? "ATIF"],
+          [t.agent, `${current.agent.name}${current.agent.version ? ` ${current.agent.version}` : ""}`],
+          [t.model, current.agent.model_name ?? "—"],
+          [t.steps, String(stats.steps)],
+          [t.toolCalls, String(stats.toolCalls)],
+          [t.tokens, tj.inOut(formatTokens(stats.promptTokens), formatTokens(stats.completionTokens))],
+          [t.cost, formatCost(stats.costUsd)],
+          [t.span, formatDuration(stats.durationSec)],
+          [t.format, current.schema_version ?? "ATIF"],
         ].map(([label, value]) => (
           <div key={label} className="flex flex-col">
             <dt className="text-label uppercase text-ink-muted">{label}</dt>
-            <dd className="font-semibold">{value}</dd>
+            <dd className="font-semibold tabular-nums">{value}</dd>
           </div>
         ))}
       </dl>
@@ -102,7 +107,7 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
       {warnings.length > 0 && (
         <details className="rounded-md border border-line bg-surface p-3 text-body-sm">
           <summary className="cursor-pointer font-semibold text-warn">
-            ! {warnings.length} {warnings.length === 1 ? "departure" : "departures"} from ATIF
+            {t.departures(warnings.length)}
           </summary>
           <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
             {warnings.map((w, i) => (
@@ -117,21 +122,21 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search messages, commands, output"
-          aria-label="Search steps"
+          placeholder={t.search}
+          aria-label={t.searchLabel}
           className="max-w-sm"
         />
         <label className="flex items-center gap-2 text-body-sm">
           <Switch checked={onlyFlagged} onCheckedChange={setOnlyFlagged} />
-          Only flagged steps
+          {t.onlyFlagged}
         </label>
         <span className="text-body-sm text-ink-muted">
-          {visible.length} of {current.steps.length} steps
+          {t.shown(visible.length, current.steps.length)}
         </span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[140px_minmax(0,1fr)]">
-        <nav aria-label="Steps" className="hidden lg:block">
+      <div className="grid gap-4 lg:grid-cols-[168px_minmax(0,1fr)]">
+        <nav aria-label={t.stepIndex} className="hidden lg:block">
           <ol className="sticky top-4 flex max-h-[calc(100dvh-2rem)] flex-col gap-0.5 overflow-y-auto">
             {visible.map((step) => {
               const worst = worstSeverity(scoped.filter((f) => f.stepId === step.step_id))
@@ -139,10 +144,15 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
                 <li key={step.step_id}>
                   <a
                     href={`#${anchor(step.step_id)}`}
-                    className="flex items-center gap-2 rounded-sm px-2 py-0.5 font-mono text-code hover:bg-surface"
+                    className={cn(
+                      "flex items-center gap-2 rounded-sm px-2 py-1 text-body-sm hover:bg-surface",
+                      worst === "error" && "bg-surface",
+                    )}
                   >
-                    <span className="w-8 text-right tabular-nums">#{step.step_id}</span>
-                    <span className="text-ink-muted">{step.source[0]}</span>
+                    <span className="w-7 text-right font-mono text-code text-ink-muted tabular-nums">{step.step_id}</span>
+                    <span className={cn("flex-1", step.source === "agent" ? "text-ink" : "text-ink-muted")}>
+                      {t.sources[step.source] ?? step.source}
+                    </span>
                     {worst && <SeverityGlyph severity={worst} />}
                   </a>
                 </li>
@@ -169,10 +179,10 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
               }}
             />
           ))}
-          {visible.length === 0 && <p className="text-body-sm text-ink-muted">No steps match.</p>}
+          {visible.length === 0 && <p className="text-body-sm text-ink-muted">{t.noMatch}</p>}
           {current.continued_trajectory_ref && (
             <p className="text-body-sm text-ink-muted">
-              Continues in <code>{current.continued_trajectory_ref}</code>.
+              {t.continues}<code>{current.continued_trajectory_ref}</code>.
             </p>
           )}
         </div>

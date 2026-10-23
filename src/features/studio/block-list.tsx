@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { ChevronDown, GripVertical, MoreHorizontal } from "lucide-react"
+import { ChevronDown, CircleX, GripVertical, MoreHorizontal, TriangleAlert } from "lucide-react"
 import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
@@ -32,11 +32,13 @@ import type { Block, SlotId } from "@/features/parts/types"
 import type { Issue } from "@/features/task/issues"
 import type { TaskProject } from "@/features/task/model"
 import { useStudio } from "@/features/task/store"
+import { useT } from "@/i18n/provider"
+import { issueText, paramText, partText } from "@/i18n/text"
 import { cn } from "@/lib/utils"
 
 import { ParamField } from "./param-field"
 import { PartPicker } from "./part-picker"
-import { SECTIONS } from "./slots"
+import { SECTIONS, sectionText } from "./slots"
 
 interface BlockCardProps {
   projectId: string
@@ -50,6 +52,8 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
   })
+  const t = useT()
+  const b = t.studio.blocks
   const [expanded, setExpanded] = useState(true)
   const updateParam = useStudio((s) => s.updateBlockParam)
   const toggleBlock = useStudio((s) => s.toggleBlock)
@@ -58,6 +62,7 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
   const Icon = SECTIONS[slot].icon
   const bodyId = `block-${block.id}-body`
   const params = part ? { ...defaultParams(part), ...block.params } : block.params
+  const name = part ? partText(t, part).name : block.partId
 
   return (
     <li
@@ -74,7 +79,7 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
         <button
           type="button"
           className="cursor-grab touch-none rounded-sm text-ink-muted"
-          aria-label={`Reorder ${part?.name ?? block.partId}`}
+          aria-label={b.reorder(name)}
           {...attributes}
           {...listeners}
         >
@@ -88,27 +93,27 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
           aria-controls={bodyId}
           onClick={() => setExpanded(!expanded)}
         >
-          <span className="truncate font-semibold">{part?.name ?? block.partId}</span>
+          <span className="truncate font-semibold">{name}</span>
           {part?.role && (
             <Badge variant="secondary" className="text-label uppercase">
               {part.role}
             </Badge>
           )}
-          {block.disabled && <Badge variant="outline">off</Badge>}
+          {block.disabled && <Badge variant="outline">{b.off}</Badge>}
           <ChevronDown className={cn("ml-auto size-4 shrink-0 transition-transform", !expanded && "-rotate-90")} />
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label={`More for ${part?.name ?? block.partId}`}>
+            <Button variant="ghost" size="icon" aria-label={b.more(name)}>
               <MoreHorizontal />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onSelect={() => toggleBlock(projectId, slot, block.id)}>
-              {block.disabled ? "Turn on" : "Turn off"}
+              {block.disabled ? b.turnOn : b.turnOff}
             </DropdownMenuItem>
             <DropdownMenuItem variant="destructive" onSelect={() => removeBlock(projectId, slot, block.id)}>
-              Remove
+              {b.remove}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -117,8 +122,16 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
       {issues.length > 0 && (
         <ul className="flex flex-col gap-1 px-3 pb-3 text-body-sm">
           {issues.map((issue) => (
-            <li key={issue.code + issue.message} className={issue.severity === "error" ? "text-fail" : "text-warn"}>
-              {issue.severity === "error" ? "✕" : "!"} {issue.message}
+            <li
+              key={issue.code + issue.message}
+              className={cn("flex items-start gap-2", issue.severity === "error" ? "text-fail" : "text-warn")}
+            >
+              {issue.severity === "error" ? (
+                <CircleX className="mt-0.5 size-4 shrink-0" aria-label={t.studio.checks.error} />
+              ) : (
+                <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-label={t.studio.checks.warning} />
+              )}
+              {issueText(t, issue)}
             </li>
           ))}
         </ul>
@@ -126,11 +139,11 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
 
       {expanded && part && (
         <div id={bodyId} className="flex flex-col gap-4 border-t border-line p-4">
-          <p className="text-body-sm text-ink-muted">{part.summary}</p>
+          <p className="text-body-sm text-ink-muted">{partText(t, part).summary}</p>
           {part.params.map((spec) => (
             <ParamField
               key={spec.key}
-              spec={spec}
+              spec={{ ...spec, ...paramText(t, part.id, spec) }}
               value={params[spec.key]}
               onChange={(value) => updateParam(projectId, slot, block.id, spec.key, value)}
             />
@@ -149,6 +162,7 @@ interface BlockListProps {
 }
 
 export function BlockList({ project, slot, lookup, issues }: BlockListProps) {
+  const t = useT()
   const moveBlock = useStudio((s) => s.moveBlock)
   const addBlock = useStudio((s) => s.addBlock)
   const sensors = useSensors(
@@ -172,7 +186,7 @@ export function BlockList({ project, slot, lookup, issues }: BlockListProps) {
     <div className="flex flex-col gap-4">
       {blocks.length === 0 ? (
         <p className="rounded-md border border-dashed border-line-strong p-6 text-body-sm text-ink-muted">
-          No parts yet. {SECTIONS[slot].hint}
+          {t.studio.blocks.empty} {sectionText(t, slot).hint}
         </p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
