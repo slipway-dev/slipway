@@ -15,7 +15,6 @@ type P = Record<string, string | number>
 
 export const en = {
   meta: {
-    title: "Slipway — a visual builder for Harbor tasks",
     description:
       "A web studio for authoring Harbor tasks — write the instruction, assemble the environment and verifier in the browser, then launch a ready-to-run task.",
     studio: "Studio",
@@ -47,22 +46,80 @@ export const en = {
 
   home: {
     tagline: "Build Harbor tasks visually. Launch them anywhere.",
-    lede: "Harbor tasks are just folders: an instruction, a Dockerfile, a test script and an optional solution. Slipway puts the whole folder on one screen. Stack environment and verifier parts, edit every file beside what it generates, and Launch a folder that ",
-    ledeEnd: " takes as-is.",
-    openStudio: "Open Studio",
-    auditRuns: "Audit a job's trajectories",
-    folderCaption: "What Launch writes",
-    folderNotes: {
-      config: "name, timeouts, network policy",
-      instruction: "what the agent is asked to do",
-      dockerfile: "stacked from environment parts",
-      test: "writes /logs/verifier/reward.txt",
-      solve: "run by oracle, so it scores 1",
+    lede: "Slipway puts a whole Harbor task on one screen. Write the instruction, stack environment and verifier parts, watch every file update as you go, then Launch a folder that ",
+    ledeEnd: " runs as-is.",
+    getStarted: "Get started",
+    howItWorks: "How it works",
+    localNote: "Runs entirely in your browser. Nothing is uploaded.",
+    demo: {
+      label: "Interactive demo",
+      hint: "Drag parts to reorder, or switch one off. The Dockerfile and checks follow.",
+      replay: "Replay",
+      generated: "environment/Dockerfile",
+      on: (name: string) => `Use ${name}`,
+      reorder: (name: string) => `Reorder ${name}`,
+      parts: {
+        base: { name: "Base image", detail: "python:3.12-slim" },
+        apt: { name: "apt packages", detail: "jq, sqlite3" },
+        pip: { name: "pip packages", detail: "pandas" },
+        file: { name: "File", detail: "data.csv" },
+      },
+      sectionNote: "FROM stays first however you order parts.",
+      ready: "Ready to Launch",
+      noFrom: "environment/Dockerfile has no FROM line.",
     },
-    thenRun: "Then, in your terminal",
-    expect1: "# expect 1",
-    expect0: "# expect 0",
-    footer: "Slipway is a community tool for Harbor. Harbor-compatible, not an official Harbor project.",
+    features: {
+      heading: "Everything a Harbor task needs, on one screen",
+      compose: {
+        title: "Compose with parts",
+        folder: {
+          config: "name, timeouts, network",
+          instruction: "what the agent is asked",
+          dockerfile: "stacked from parts",
+          test: "writes the reward",
+          solve: "run by oracle",
+        },
+        body: "Base images, packages, files, verifiers and solutions are parts. Stack them, set their parameters, and Slipway writes the Dockerfile, test script and task.toml.",
+      },
+      checks: {
+        title: "Checks that cite Harbor",
+        body: "Validated against Harbor's own task schema, plus the mistakes Harbor would make silently: a verifier that never writes a reward, a solution copied into the image.",
+      },
+      audit: {
+        title: "Audit what agents did",
+        body: "Import a job from harbor run and read each trial step by step. Moves that can fake a reward are flagged, so a passing score is not taken on trust.",
+        flag: "Red flag",
+      },
+      local: {
+        title: "Local by default",
+        body: "Tasks and jobs stay in this browser. A content security policy blocks every outbound request, so your code and keys never leave the page.",
+      },
+    },
+    how: {
+      heading: "How it works",
+      steps: [
+        { title: "Start a task", body: "From the Hello, world starter, a blank scaffold, or an existing task folder." },
+        { title: "Assemble it", body: "Write instruction.md, stack environment parts, pick a verifier and a solution." },
+        { title: "Fix what checks find", body: "Every problem points at the part or file to change." },
+        { title: "Launch and run", body: "Download the folder and run it with oracle and nop." },
+      ],
+      thenRun: "Then, in your terminal",
+      expect1: "# expect 1",
+      expect0: "# expect 0",
+    },
+    cta: {
+      heading: "Build your first task in a few minutes",
+      body: "Open the Hello, world starter and Launch it. It scores 1 with oracle and 0 with nop.",
+    },
+  },
+
+  footer: {
+    product: "Product",
+    resources: "Resources",
+    harborDocs: "Harbor docs",
+    github: "GitHub",
+    createdBy: "Created by",
+    disclaimer: "A community tool for Harbor. Harbor-compatible, not an official Harbor project.",
   },
 
   taskList: {

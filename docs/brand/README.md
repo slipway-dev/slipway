@@ -19,7 +19,7 @@ Slipway 是一个在浏览器里可视化制作 Harbor task 的 web studio。Sli
 ### 定位语
 
 - 主 tagline（英）：**Build Harbor tasks visually. Launch them anywhere.**
-- 主 tagline（中）：**可视化地造 Harbor task，一键下水。**
+- 主 tagline（中）：**可视化构建 Harbor task，随处运行。**
 - 备选：“From seed to verified task, in the browser.” / “The slipway for your agent evals.”
 
 ### 描述（按长度取用）
@@ -42,35 +42,36 @@ Slipway 是一个在浏览器里可视化制作 Harbor task 的 web studio。Sli
 
 ### 颜色
 
-- 页面底色用 `paper`，面板与编辑区用 `surface`，文件树、侧栏用 `surface-sunken`。正文 `ink`，次要信息 `ink-muted`。
-- `signal`（航海安全橙）是品牌色，也是唯一的主行动色：每个视图只有一个 `signal` 填充按钮（通常是 Launch）。填充 `signal` 时文字用 `on-signal`。
-- `tide`（深潮青）用于链接和一切指向 Harbor 原生对象的引用（`task.toml`、Hub、registry）。
-- `hull` 是深色品牌块：代码面板、`start-env` 终端、封面主色块，在亮暗两套主题里都是深色，文字用 `hull-ink`。
-- 状态色永远带图形和文字：`pass`（✓ pass）、`fail`（✕ fail）、`warn`（! unverified）。`pass` 与 `fail` 不允许只靠色相区分。
-- Slipway 特有的校验语义：`oracle` = 1 显示为 `pass`；`nop` = 0 是**预期结果**，显示为 `tide` 的 “expected 0”，不能用 `fail`；`nop` > 0（任务泄题）才用 `fail`。
-- 禁用：渐变（尤其蓝紫）、霓虹色、彩色左边框卡片。
+- 整体是现代的黑白灰：页面底色 `paper`（近白，oklch(99.5% 0 0)），面板 `surface`（纯白），文件树、侧栏和页脚 `surface-sunken`（浅灰）。正文 `ink`（近黑），次要信息 `ink-muted`（中灰）。中性色不带色相，不用米黄、纸张色。
+- `signal`（品牌橙）少用但要用得醒目：每个视图最多一个 `signal` 填充按钮（Launch、首页的 Get started），外加少量需要吸引注意的高亮。其余主按钮用 `ink` 黑底白字。填充 `signal` 时文字用 `on-signal`。
+- `tide`（低饱和蓝）只用于指向 Harbor 原生对象的引用和 `nop` 的“expected 0”，不做装饰。
+- `hull` 是深色块：代码面板、生成文件、终端命令，在亮暗两套主题里都是深色，文字用 `hull-ink`。
+- 状态色永远带图形和文字：`pass`、`fail`、`warn`，图标用 lucide 的 CircleCheck / CircleX / TriangleAlert，不用 ✓ ✕ ! 字符。
+- Slipway 特有的校验语义：`oracle` = 1 显示为 `pass`；`nop` = 0 是**预期结果**，显示为 “expected 0”，不能用 `fail`；`nop` > 0（任务泄题）才用 `fail`。
+- 禁用：渐变、霓虹色、彩色左边框卡片、全大写小标签。
 
 ### 字体
 
-- 界面与标题用 sans 家族（Schibsted Grotesk，中文回退 Noto Sans SC），代码、命令、文件名用 mono（JetBrains Mono），两者都走 Google Fonts。
-- 字号层级：`display-xl` 只用于落地页主视觉，`display` 用于区块标题，`title` 用于面板标题，正文 `body`，元信息 `body-sm`，大写小标签 `label`，所有代码 `code`。
-- 一屏内最多两个 display 级字号。
+- 界面与标题用 Geist，代码、命令、文件名用 Geist Mono，均由 next/font 自托管。
+- 中文依次回退到 PingFang SC、Hiragino Sans GB、Microsoft YaHei（系统常用字体），只有都没有时才加载 Noto Sans SC。
+- 字号层级：`display-xl` 只用于首页主视觉，`display` 用于区块标题，`title` 用于面板标题，正文 `body`，元信息 `body-sm`，小标签 `label`（句首大写、中等字重，不全大写），所有代码 `code`。标题字距收紧（display 约 -0.03em）。
 
 ### 间距、圆角、边框
 
-- 基础栅格 4px：`space-1` 到 `space-8`。面板内边距 `space-4`，面板之间 `space-6`，落地页区块之间 `space-8`。移动端左右留白 `space-4`。
-- 圆角：标签和输入框 `radius-sm`，按钮与 task block `radius-md`，对话框和编辑画布 `radius-lg`。
-- 靠边框分层，不靠阴影：控件边框 `line-strong`，装饰分割线 `line`。阴影只有 `shadow-drag` 一个，且只在拖拽时出现。
-- 焦点环：2px 实线 `signal`，外偏移 2px，在 `paper`、`surface` 上都满足 3:1。
+- 基础栅格 4px。留白要足：面板内边距 20–32px，页面区块之间 96px，移动端左右留白 16px。
+- 圆角偏大：小标签 `radius-sm`（6px），按钮和输入框 10px，task block、列表、对话框 `radius-lg`（16px）及以上，首页大卡片 22px。
+- 主要靠边框和底色分层：控件边框 `line-strong`，分割线 `line`。阴影只有两种：拖拽时的 `shadow-drag`，以及首页演示卡片、对话框这类浮层用的 `shadow-float`。
+- 焦点环：2px 实线 `ink`，外偏移 2px。
 
 ### 版式
 
-- Studio 是三栏：左侧 `surface-sunken` 文件/块列表，中间 `surface` 编辑画布，右侧检查结果（oracle / nop / lint）。窄屏时三栏折叠为标签页，不出现横向滚动。
-- 落地页：左对齐大标题 + 一张真实的 Studio 截图，不用插画、不用 3D、不用 stock 照片。
+- Studio 工作台：左侧是 Launch 出的真实文件夹树，中间左半部分是结构化编辑、右半部分是生成的文件，底部是常驻的检查栏。窄屏时折叠为“文件 / 编辑 / 检查”三个标签页，不出现横向滚动。
+- 首页：主标题 + 可拖动的交互演示，下面依次是功能展示、工作原理和结尾的号召区；所有非工作台页面都带统一的页脚。
+- 页面标题一律是 “Slipway Studio”，中英文相同。
 
 ### 动效
 
-- 只有两种：拖拽时的 `shadow-drag` 抬起，Launch 成功后块沿 32.7° 斜向滑出（与 logo 的船台角度一致），时长 240ms 以内。尊重 `prefers-reduced-motion`，此时一律无动效。
+- 只为状态服务：拖拽时的 `shadow-drag` 抬起、首页演示里部件依次出现和 Dockerfile 行依次写入（约 300–400ms，指数缓出）。尊重 `prefers-reduced-motion`，此时一律无动效。
 
 ## Logo
 

@@ -100,14 +100,14 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
           [t.format, current.schema_version ?? "ATIF"],
         ].map(([label, value]) => (
           <div key={label} className="flex flex-col">
-            <dt className="text-label uppercase text-ink-muted">{label}</dt>
+            <dt className="text-label font-medium text-ink-muted">{label}</dt>
             <dd className="font-semibold tabular-nums">{value}</dd>
           </div>
         ))}
       </dl>
 
       {warnings.length > 0 && (
-        <details className="rounded-md border border-line bg-surface p-3 text-body-sm">
+        <details className="rounded-xl border border-line bg-surface p-4 text-body-sm">
           <summary className="cursor-pointer font-semibold text-warn">
             {t.departures(warnings.length)}
           </summary>

@@ -98,7 +98,7 @@ function VerifierTab({ files, root, trial }: { files: FileSet; root: string; tri
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-2">
-        <h3 className="text-label uppercase text-ink-muted">{t.rewards}</h3>
+        <h3 className="text-label font-medium text-ink-muted">{t.rewards}</h3>
         {rewards.length ? (
           <dl className="flex flex-wrap gap-x-6 gap-y-2">
             {rewards.map(([key, value]) => (
@@ -114,10 +114,10 @@ function VerifierTab({ files, root, trial }: { files: FileSet; root: string; tri
       </section>
       {ctrf && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-label uppercase text-ink-muted">{t.tests(ctrf.tool)}</h3>
+          <h3 className="text-label font-medium text-ink-muted">{t.tests(ctrf.tool)}</h3>
           <ul className="flex flex-col gap-1">
             {ctrf.tests.map((test) => (
-              <li key={test.name} className="flex flex-col gap-0.5 rounded-md border border-line bg-surface p-2 text-body-sm">
+              <li key={test.name} className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2 text-body-sm">
                 <span className="flex items-center gap-2">
                   <span
                     className={cn(
@@ -295,7 +295,7 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
       </div>
 
       {exception && (
-        <section className="flex flex-col gap-2 rounded-md border border-fail bg-surface p-4">
+        <section className="flex flex-col gap-2 rounded-xl border border-fail bg-surface p-4">
           <p className="flex items-start gap-2">
             <X className="mt-1 size-4 shrink-0 text-fail" strokeWidth={2.5} aria-hidden />
             <span>

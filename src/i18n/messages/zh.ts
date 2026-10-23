@@ -8,7 +8,6 @@ import { zhRuns } from "./zh-runs"
  */
 export const zh: Messages = {
   meta: {
-    title: "Slipway — 可视化制作 Harbor task",
     description:
       "在浏览器里编写 instruction、拼装 environment 与 verifier，把一个想法做成可直接 harbor run 的 Harbor task。",
     studio: "Studio",
@@ -39,23 +38,81 @@ export const zh: Messages = {
   },
 
   home: {
-    tagline: "可视化地造 Harbor task，一键下水。",
-    lede: "Harbor task 就是一个文件夹：一份 instruction、一个 Dockerfile、一个测试脚本，外加可选的 solution。Slipway 把整个文件夹放在一屏里：叠加 environment 和 verifier 部件，每个文件都和它的生成结果并排编辑，最后 Launch 出一个 ",
-    ledeEnd: " 可以直接运行的文件夹。",
-    openStudio: "打开 Studio",
-    auditRuns: "审计一个 job 的 trajectory",
-    folderCaption: "Launch 写出的内容",
-    folderNotes: {
-      config: "名称、超时、网络策略",
-      instruction: "要求 agent 完成的任务",
-      dockerfile: "由 environment 部件叠加生成",
-      test: "写入 /logs/verifier/reward.txt",
-      solve: "由 oracle 运行，得 1 分",
+    tagline: "可视化构建 Harbor task，随处运行。",
+    lede: "Slipway 把整个 Harbor task 放在一个界面里：写好 instruction，叠加 environment 和 verifier 部件，每个文件都会实时更新。完成后点 Launch，得到一个可以直接用 ",
+    ledeEnd: " 运行的文件夹。",
+    getStarted: "开始使用",
+    howItWorks: "了解工作原理",
+    localNote: "完全在浏览器中运行，文件不会上传。",
+    demo: {
+      label: "交互演示",
+      hint: "拖动部件调整顺序，或关掉其中一个，Dockerfile 和检查结果会随之变化。",
+      replay: "重播",
+      generated: "environment/Dockerfile",
+      on: (name) => `启用 ${name}`,
+      reorder: (name) => `调整 ${name} 的顺序`,
+      parts: {
+        base: { name: "基础镜像", detail: "python:3.12-slim" },
+        apt: { name: "apt 软件包", detail: "jq, sqlite3" },
+        pip: { name: "pip 软件包", detail: "pandas" },
+        file: { name: "文件", detail: "data.csv" },
+      },
+      sectionNote: "无论部件怎么排，FROM 始终在第一行。",
+      ready: "可以 Launch 了",
+      noFrom: "environment/Dockerfile 缺少 FROM 行。",
     },
-    thenRun: "然后在终端里运行",
-    expect1: "# 预期 1",
-    expect0: "# 预期 0",
-    footer: "Slipway 是 Harbor 的社区工具，与 Harbor 兼容，并非 Harbor 官方项目。",
+    features: {
+      heading: "一个 Harbor task 需要的，都在一个界面里",
+      compose: {
+        title: "用部件拼装",
+        folder: {
+          config: "名称、超时、网络",
+          instruction: "交给 agent 的任务",
+          dockerfile: "由部件叠加生成",
+          test: "写入 reward",
+          solve: "由 oracle 运行",
+        },
+        body: "基础镜像、软件包、文件、verifier 和 solution 都是部件。把它们叠起来、填好参数，Slipway 会生成 Dockerfile、测试脚本和 task.toml。",
+      },
+      checks: {
+        title: "依据 Harbor 的检查",
+        body: "按 Harbor 自己的 task schema 校验，还能发现 Harbor 不会报错的问题：verifier 从不写 reward、solution 被复制进了镜像。",
+      },
+      audit: {
+        title: "审计 agent 做了什么",
+        body: "导入 harbor run 生成的 job，逐个 step 查看每个 trial。可能伪造 reward 的操作会被标出来，满分不再只能凭信任。",
+        flag: "红色标记",
+      },
+      local: {
+        title: "默认本地运行",
+        body: "Task 和 job 都只保存在当前浏览器里。内容安全策略会拦截所有外发请求，你的代码和密钥不会离开页面。",
+      },
+    },
+    how: {
+      heading: "工作原理",
+      steps: [
+        { title: "创建 task", body: "从 Hello, world 模板、空白脚手架或已有的 task 文件夹开始。" },
+        { title: "拼装内容", body: "写好 instruction.md，叠加 environment 部件，选好 verifier 和 solution。" },
+        { title: "修复检查发现的问题", body: "每个问题都会指向需要修改的部件或文件。" },
+        { title: "导出并运行", body: "点 Launch 下载文件夹，再分别用 oracle 和 nop 运行。" },
+      ],
+      thenRun: "然后在终端里运行",
+      expect1: "# 预期 1",
+      expect0: "# 预期 0",
+    },
+    cta: {
+      heading: "几分钟做出你的第一个 task",
+      body: "打开 Hello, world 模板，点 Launch 导出，用 oracle 运行得 1 分，用 nop 运行得 0 分。",
+    },
+  },
+
+  footer: {
+    product: "产品",
+    resources: "资源",
+    harborDocs: "Harbor 文档",
+    github: "GitHub",
+    createdBy: "作者",
+    disclaimer: "Harbor 的社区工具，与 Harbor 兼容，并非 Harbor 官方项目。",
   },
 
   taskList: {
@@ -94,8 +151,8 @@ export const zh: Messages = {
     notSaved: "当前浏览器中没有保存这个 task。",
     backToTasks: "返回 task 列表",
     launch: "Launch",
-    launched: (file) => `已 Launch ${file}`,
-    launchedWithErrors: (file, n) => `已 Launch ${file}，但还有 ${n} 个错误未解决。`,
+    launched: (file) => `已导出 ${file}`,
+    launchedWithErrors: (file, n) => `已导出 ${file}，但还有 ${n} 个错误未解决。`,
     panes: { files: "文件", edit: "编辑", checks: "检查" },
     tree: {
       label: "Task 文件夹",
@@ -141,7 +198,7 @@ export const zh: Messages = {
       open: "打开文件",
       handEditNote: "手动编辑后，部件将不再更新此文件，直到你还原它。",
       binary: (kb) =>
-        `二进制文件，${kb} KB。Slipway 会逐字节保留，Launch 时原样写出；如需修改，请用你自己的工具编辑后重新导入。`,
+        `二进制文件，${kb} KB。Slipway 会逐字节保留，导出时原样写入；如需修改，请用你自己的工具编辑后重新导入。`,
     },
     blocks: {
       empty: "还没有部件。",
@@ -200,7 +257,7 @@ export const zh: Messages = {
       showAll: "全部展开",
       hide: "收起",
       verify: "用 Harbor 验证",
-      verifyHelp: "解压 Launch 出的 task，分别运行两个 agent。合格的 task 有 solution 时得 1 分，没有时得 0 分。",
+      verifyHelp: "解压导出的 task，分别用两个 agent 运行。合格的 task 有 solution 时得 1 分，没有时得 0 分。",
       expects1: "预期 1",
       expected0: "预期 0",
       unverified: "未验证",

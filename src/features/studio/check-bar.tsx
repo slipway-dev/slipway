@@ -38,7 +38,7 @@ function IssueList({
     )
   }
   return (
-    <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-surface">
+    <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
       {issues.map((issue, i) => {
         const where = issue.path
         return (
@@ -47,7 +47,7 @@ function IssueList({
               type="button"
               disabled={!issue.blockId && !issue.path}
               onClick={() => onSelect(issue)}
-              className="flex w-full items-start gap-3 px-3 py-2 text-left text-body-sm enabled:hover:bg-surface-sunken"
+              className="flex w-full items-start gap-3 px-4 py-3 text-left text-body-sm enabled:hover:bg-surface-sunken"
             >
               <SeverityIcon severity={issue.severity} className="mt-0.5" />
               <span className="sr-only">{issue.severity === "error" ? t.studio.checks.error : t.studio.checks.warning}</span>
@@ -68,7 +68,7 @@ function IssueList({
 function Command({ command, expect }: { command: string; expect: React.ReactNode }) {
   const t = useT()
   return (
-    <li className="flex items-center gap-3 px-3 py-2">
+    <li className="flex items-center gap-3 px-4 py-2.5">
       <code className="min-w-0 flex-1 truncate text-code" title={command}>
         {command}
       </code>
@@ -99,7 +99,7 @@ function Verify({ dirName }: { dirName: string }) {
         {c.verify}
       </h3>
       <p className="text-body-sm text-ink-muted">{c.verifyHelp}</p>
-      <ul className="flex flex-col divide-y divide-white/10 rounded-md bg-hull text-hull-ink">
+      <ul className="flex flex-col divide-y divide-white/10 rounded-xl bg-hull text-hull-ink">
         <Command
           command={`harbor run -p ./${dirName} -a oracle`}
           expect={
@@ -150,7 +150,7 @@ export function CheckBar({ issues, dirName, onSelectIssue }: CheckBarProps) {
 
   return (
     <section aria-label={c.title} className="shrink-0 border-t border-line bg-surface">
-      <div className="flex h-10 items-center gap-4 px-4 text-body-sm">
+      <div className="flex h-12 items-center gap-4 px-5 text-body-sm">
         <button
           type="button"
           aria-expanded={open}
@@ -192,7 +192,7 @@ export function CheckBar({ issues, dirName, onSelectIssue }: CheckBarProps) {
         <div
           id="check-details"
           className={cn(
-            "grid max-h-[40vh] items-start gap-6 overflow-y-auto border-t border-line px-4 py-4",
+            "grid max-h-[40vh] items-start gap-8 overflow-y-auto border-t border-line px-5 py-5",
             issues.length > 0 && "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]",
           )}
         >

@@ -164,19 +164,19 @@ export function TaskList() {
       {!hydrated ? (
         <p className="text-body-sm text-ink-muted">{tl.loading}</p>
       ) : sorted.length === 0 ? (
-        <div className="flex flex-col items-start gap-2 rounded-lg border border-dashed border-line-strong p-8">
+        <div className="flex flex-col items-start gap-2 rounded-2xl border border-dashed border-line-strong p-10">
           <p className="font-semibold">{tl.emptyTitle}</p>
           <p className="text-body-sm text-ink-muted">{tl.emptyBody}</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-md border border-line bg-surface">
+        <div className="overflow-hidden rounded-2xl border border-line bg-surface">
           <table className="w-full table-fixed text-left text-body-sm">
-            <thead className="border-b border-line bg-surface-sunken text-label tracking-wide text-ink-muted uppercase">
+            <thead className="border-b border-line bg-surface-sunken text-label font-medium text-ink-muted">
               <tr>
-                <th scope="col" className="w-[30%] px-4 py-2 font-semibold">{tl.columns.task}</th>
-                <th scope="col" className="hidden px-4 py-2 font-semibold md:table-cell">{tl.columns.description}</th>
-                <th scope="col" className="w-56 px-4 py-2 font-semibold">{tl.columns.edited}</th>
-                <th scope="col" className="w-14 px-2 py-2"><span className="sr-only">{t.common.delete}</span></th>
+                <th scope="col" className="w-[30%] px-4 py-3 font-semibold">{tl.columns.task}</th>
+                <th scope="col" className="hidden px-4 py-3 font-semibold md:table-cell">{tl.columns.description}</th>
+                <th scope="col" className="w-56 px-4 py-3 font-semibold">{tl.columns.edited}</th>
+                <th scope="col" className="w-14 px-2 py-3"><span className="sr-only">{t.common.delete}</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">

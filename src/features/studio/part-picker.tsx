@@ -172,7 +172,7 @@ export function PartPicker({ slot, takenRoles, onAdd }: PartPickerProps) {
                       >
                         <span className="flex flex-wrap items-center gap-2 font-semibold">
                           {text.name}
-                          {part.role && <Badge variant="secondary" className="text-label uppercase">{part.role}</Badge>}
+                          {part.role && <Badge variant="secondary" className="text-label">{part.role}</Badge>}
                           {custom && <Badge variant="outline">{p.yours}</Badge>}
                         </span>
                         <span className="text-body-sm text-ink-muted">{text.summary}</span>

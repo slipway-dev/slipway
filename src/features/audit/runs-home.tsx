@@ -33,19 +33,19 @@ export function RunsHome() {
 
       {hydrated && sorted.length > 0 && (
         <section className="flex flex-col gap-3" aria-labelledby="jobs-heading">
-          <h2 id="jobs-heading" className="text-label uppercase text-ink-muted">
+          <h2 id="jobs-heading" className="text-label font-medium text-ink-muted">
             {t.jobs.heading}
           </h2>
-          <div className="overflow-x-auto rounded-md border border-line bg-surface">
+          <div className="overflow-x-auto rounded-xl border border-line bg-surface">
             <table className="w-full min-w-[640px] text-left text-body-sm">
-              <thead className="border-b border-line bg-surface-sunken text-label uppercase text-ink-muted">
+              <thead className="border-b border-line bg-surface-sunken text-label font-medium text-ink-muted">
                 <tr>
-                  <th className="px-3 py-2 font-semibold">{t.jobs.columns.job}</th>
-                  <th className="px-3 py-2 text-right font-semibold">{t.jobs.columns.trials}</th>
-                  <th className="px-3 py-2 font-semibold">{t.jobs.columns.pass}</th>
-                  <th className="px-3 py-2 font-semibold">{t.jobs.columns.agents}</th>
-                  <th className="px-3 py-2 font-semibold">{t.jobs.columns.imported}</th>
-                  <th className="w-10 px-3 py-2">
+                  <th className="px-3 py-3 font-semibold">{t.jobs.columns.job}</th>
+                  <th className="px-3 py-3 text-right font-semibold">{t.jobs.columns.trials}</th>
+                  <th className="px-3 py-3 font-semibold">{t.jobs.columns.pass}</th>
+                  <th className="px-3 py-3 font-semibold">{t.jobs.columns.agents}</th>
+                  <th className="px-3 py-3 font-semibold">{t.jobs.columns.imported}</th>
+                  <th className="w-10 px-3 py-3">
                     <span className="sr-only">{t.jobs.deleteLabel("")}</span>
                   </th>
                 </tr>

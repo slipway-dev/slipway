@@ -16,7 +16,7 @@ export function LocaleSwitch({ tone = "paper", className }: { tone?: "paper" | "
       role="radiogroup"
       aria-label={t.nav.language}
       className={cn(
-        "inline-flex shrink-0 rounded-sm border p-0.5 text-label",
+        "inline-flex shrink-0 rounded-lg border p-0.5 text-label",
         tone === "paper" ? "border-line bg-surface" : "border-white/15",
         className,
       )}
@@ -31,7 +31,7 @@ export function LocaleSwitch({ tone = "paper", className }: { tone?: "paper" | "
           title={FULL[l]}
           onClick={() => l !== locale && setLocale(l)}
           className={cn(
-            "rounded-[3px] px-2 py-0.5 font-semibold transition-colors",
+            "rounded-md px-2.5 py-1 font-medium transition-colors",
             l === locale
               ? tone === "paper"
                 ? "bg-ink text-paper"

@@ -25,9 +25,9 @@ export function GeneratedFiles({ files, onSelect }: GeneratedFilesProps) {
   const current = files.find((f) => f.path === picked) ?? files[0]
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-md bg-hull text-hull-ink">
-      <div className="flex min-h-10 items-center gap-1 overflow-x-auto border-b border-white/10 px-2">
-        <span className="shrink-0 px-2 text-label tracking-wide text-hull-muted uppercase">{t.studio.generated}</span>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-hull text-hull-ink">
+      <div className="flex min-h-12 items-center gap-1 overflow-x-auto border-b border-white/10 px-3">
+        <span className="shrink-0 px-2 text-label text-hull-muted">{t.studio.generated}</span>
         <div role="tablist" className="flex min-w-0 items-center">
           {files.map((file) => (
             <button
@@ -37,7 +37,7 @@ export function GeneratedFiles({ files, onSelect }: GeneratedFilesProps) {
               aria-selected={file === current}
               onClick={() => setPicked(file.path)}
               className={cn(
-                "shrink-0 rounded-sm px-2 py-1 font-mono text-code text-hull-muted hover:text-hull-ink",
+                "shrink-0 rounded-md px-2.5 py-1 font-mono text-code text-hull-muted hover:text-hull-ink",
                 file === current && "bg-white/10 text-hull-ink",
               )}
             >

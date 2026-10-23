@@ -1,12 +1,11 @@
-import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { ClientOnly } from "@/components/client-only"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteNav } from "@/components/site-nav"
 import { LoadingNote } from "@/features/audit/loading-note"
 import { JobView } from "@/features/audit/job-view"
 
-export const metadata: Metadata = { title: "Job" }
 
 const loading = <LoadingNote what="job" />
 
@@ -24,6 +23,7 @@ export default function JobPage({ params }: PageProps<"/runs/[jobId]">) {
           ))}
         </Suspense>
       </main>
+      <SiteFooter />
     </div>
   )
 }
