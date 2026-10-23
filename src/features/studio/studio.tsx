@@ -16,7 +16,7 @@ import { buildTaskZip } from "@/features/task/archive"
 import { composeTask, type TaskFile } from "@/features/task/compose"
 import type { Issue } from "@/features/task/issues"
 import { lintTask } from "@/features/task/lint"
-import { taskDirName, taskTitle, type TaskProject } from "@/features/task/model"
+import { taskDirName, taskTitle, type FileOverride, type TaskProject } from "@/features/task/model"
 import { useHydrated, usePartLookup, useStudio } from "@/features/task/store"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { useT } from "@/i18n/provider"
@@ -32,6 +32,7 @@ import { TaskTree } from "./task-tree"
 import { SimBadge, ViewSwitch, type ViewMode } from "./view-switch"
 import { Workbench } from "./workbench/workbench"
 import { NewFileDialog } from "./new-file-dialog"
+import { RunDialog } from "./run-dialog"
 
 type MobileTab = "files" | "edit" | "checks"
 
@@ -166,6 +167,11 @@ export function Studio({ id }: { id: string }) {
     select({ kind: "file", path: clean })
   }
 
+  function uploadFiles(files: [string, FileOverride][]) {
+    for (const [path, file] of files) setOverride(project!.id, path, file)
+    select({ kind: "file", path: files[0][0] })
+  }
+
   function launch() {
     const file = `${dirName}.zip`
     downloadBytes(buildTaskZip(dirName, composed!.files), file)
@@ -198,7 +204,7 @@ export function Studio({ id }: { id: string }) {
 
   return (
     <div className="flex h-dvh flex-col">
-      <NewFileDialog open={newFileOpen} onOpenChange={setNewFileOpen} onCreate={addFile} />
+      <NewFileDialog open={newFileOpen} onOpenChange={setNewFileOpen} onCreate={addFile} onUpload={uploadFiles} />
       <header className="flex min-h-16 shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-paper px-4 py-2 lg:px-5 lg:py-0">
         <Link
           href="/studio"
@@ -217,6 +223,7 @@ export function Studio({ id }: { id: string }) {
           <ViewSwitch active={view.mode === "source" ? "source" : "blueprint"} onChange={switchView} />
         </div>
         <LocaleSwitch />
+        <RunDialog project={project} dirName={dirName} />
         <Button variant="signal" onClick={launch}>
           <Rocket />
           {t.studio.launch}

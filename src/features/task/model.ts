@@ -40,6 +40,16 @@ export interface TaskProject {
   overrides: Record<string, FileOverride>
   /** Absent in projects saved before scenarios existed. */
   scenarios?: Scenario[]
+  /** How the author runs the task: not part of the task, remembered for the run command. */
+  run?: RunChoice
+}
+
+/** The agent, model and options for `harbor run`; see features/harbor/agents. */
+export interface RunChoice {
+  agent: string
+  model?: string
+  attempts?: number
+  forceBuild?: boolean
 }
 
 /** "org/name" → "name", used for the Launch folder and run commands. */

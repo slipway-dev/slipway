@@ -76,6 +76,29 @@ export function SettingsForm({ project }: { project: TaskProject }) {
   const [authorsText, setAuthorsText] = useParsedText(task.authors ?? [], formatAuthors, parseAuthors)
   const [keywordsText, setKeywordsText] = useParsedText(task.keywords ?? [], (k) => k.join(", "), parseKeywords)
 
+  const metadataTags = Array.isArray(config.metadata?.tags) ? (config.metadata.tags as unknown[]).filter((x): x is string => typeof x === "string") : []
+  const [tagsText, setTagsText] = useParsedText(metadataTags, (k) => k.join(", "), parseKeywords)
+
+  const estimate = (key: "expert_time_estimate_min" | "junior_time_estimate_min", label: string) => (
+    <Field label={label}>
+      {(id) => (
+        <Input
+          id={id}
+          type="number"
+          inputMode="numeric"
+          min={0}
+          value={typeof config.metadata?.[key] === "number" ? (config.metadata[key] as number) : ""}
+          onChange={(e) =>
+            update((c) => {
+              if (e.target.value === "") delete c.metadata?.[key]
+              else (c.metadata ??= {})[key] = Number(e.target.value)
+            })
+          }
+        />
+      )}
+    </Field>
+  )
+
   const timeout = (
     section: "agent" | "verifier" | "environment",
     key: "timeout_sec" | "build_timeout_sec",
@@ -184,6 +207,47 @@ export function SettingsForm({ project }: { project: TaskProject }) {
             )}
           </Field>
         </div>
+        <Field label={s.tags} description={s.tagsHelp}>
+          {(id) => (
+            <Input
+              id={id}
+              value={tagsText}
+              onChange={(e) => {
+                setTagsText(e.target.value)
+                update((c) => {
+                  const tags = parseKeywords(e.target.value)
+                  if (tags.length) (c.metadata ??= {}).tags = tags
+                  else if (c.metadata) delete c.metadata.tags
+                })
+              }}
+            />
+          )}
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {estimate("expert_time_estimate_min", s.expertTime)}
+          {estimate("junior_time_estimate_min", s.juniorTime)}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h3 className="text-label font-medium text-ink-muted">[environment]</h3>
+        <Field label={s.dockerImage} description={s.dockerImageHelp}>
+          {(id) => (
+            <Input
+              id={id}
+              value={config.environment?.docker_image ?? ""}
+              placeholder="my-registry/my-task:2026-01-01"
+              className="font-mono text-code"
+              onChange={(e) =>
+                update((c) => {
+                  const value = e.target.value.trim()
+                  if (value) (c.environment ??= {}).docker_image = value
+                  else if (c.environment) delete c.environment.docker_image
+                })
+              }
+            />
+          )}
+        </Field>
       </section>
 
       <section className="flex flex-col gap-4">
