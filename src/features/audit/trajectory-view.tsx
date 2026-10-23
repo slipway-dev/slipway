@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react"
 
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { contentText, findSubagent, totals } from "@/features/runs/atif"
+import { contentText, findSubagent, totals, type TrajectoryProblem } from "@/features/runs/atif"
 import { SEVERITY_ORDER, worstSeverity, type Finding } from "@/features/runs/audit"
 import { formatCost, formatDuration, formatTokens } from "@/features/runs/format"
 import { annotationKey } from "@/features/runs/store"
@@ -30,7 +30,7 @@ function stepText(step: Step): string {
 
 interface TrajectoryViewProps {
   root: Trajectory
-  warnings: string[]
+  warnings: TrajectoryProblem[]
   findings: Finding[]
   jobId: string
   trial: string
@@ -110,8 +110,8 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
             {t.departures(warnings.length)}
           </summary>
           <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
-            {warnings.map((w) => (
-              <li key={w}>{w}</li>
+            {warnings.map((w, i) => (
+              <li key={`${w.code}-${i}`}>{w.message}</li>
             ))}
           </ul>
         </details>

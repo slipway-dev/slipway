@@ -7,6 +7,8 @@ import validateFn from "./task-schema.validate.js"
 export interface SchemaError {
   /** Dotted path into task.toml, e.g. "environment.cpus". */
   path: string
+  /** Ajv keyword that failed ("type", "enum", "required", ...), for translation. */
+  keyword: string
   message: string
 }
 
@@ -30,7 +32,7 @@ export function validateTaskConfig(config: TaskConfig): SchemaError[] {
     if (error.keyword === "anyOf") continue
     const path = toPath(error)
     if (!byPath.has(path)) {
-      byPath.set(path, { path, message: error.message ?? "is invalid" })
+      byPath.set(path, { path, keyword: error.keyword, message: error.message ?? "is invalid" })
     }
   }
   return [...byPath.values()]

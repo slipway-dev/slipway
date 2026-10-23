@@ -1,6 +1,6 @@
 "use client"
 
-import { useId } from "react"
+import { useId, useState } from "react"
 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,6 +45,25 @@ function parseAuthors(text: string): Author[] {
     })
 }
 
+function parseKeywords(text: string): string[] {
+  return text
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean)
+}
+
+/**
+ * Text that edits a parsed value. The typed text is kept so a trailing
+ * comma or newline survives, and replaced only when the value changes from
+ * outside (an import, another tab), i.e. no longer matches what was typed.
+ */
+function useParsedText<T>(value: T, format: (value: T) => string, parse: (text: string) => T) {
+  const [text, setText] = useState(() => format(value))
+  const external = format(value)
+  if (external !== format(parse(text))) setText(external)
+  return [text, setText] as const
+}
+
 const DIFFICULTIES = ["easy", "medium", "hard"]
 
 export function SettingsForm({ project }: { project: TaskProject }) {
@@ -54,6 +73,8 @@ export function SettingsForm({ project }: { project: TaskProject }) {
   const { config } = project
   const update = (fn: (config: TaskConfig) => void) => updateProject(project.id, (p) => fn(p.config))
   const task = config.task ?? { name: "" }
+  const [authorsText, setAuthorsText] = useParsedText(task.authors ?? [], formatAuthors, parseAuthors)
+  const [keywordsText, setKeywordsText] = useParsedText(task.keywords ?? [], (k) => k.join(", "), parseKeywords)
 
   const timeout = (
     section: "agent" | "verifier" | "environment",
@@ -108,8 +129,11 @@ export function SettingsForm({ project }: { project: TaskProject }) {
           {(id) => (
             <Textarea
               id={id}
-              defaultValue={formatAuthors(task.authors)}
-              onChange={(e) => update((c) => void ((c.task ??= { name: "" }).authors = parseAuthors(e.target.value)))}
+              value={authorsText}
+              onChange={(e) => {
+                setAuthorsText(e.target.value)
+                update((c) => void ((c.task ??= { name: "" }).authors = parseAuthors(e.target.value)))
+              }}
             />
           )}
         </Field>
@@ -117,16 +141,11 @@ export function SettingsForm({ project }: { project: TaskProject }) {
           {(id) => (
             <Input
               id={id}
-              defaultValue={(task.keywords ?? []).join(", ")}
-              onChange={(e) =>
-                update(
-                  (c) =>
-                    void ((c.task ??= { name: "" }).keywords = e.target.value
-                      .split(",")
-                      .map((k) => k.trim())
-                      .filter(Boolean)),
-                )
-              }
+              value={keywordsText}
+              onChange={(e) => {
+                setKeywordsText(e.target.value)
+                update((c) => void ((c.task ??= { name: "" }).keywords = parseKeywords(e.target.value)))
+              }}
             />
           )}
         </Field>

@@ -219,3 +219,33 @@ describe("precompiled validator", () => {
     expect(committed).toBe(buildTaskValidator())
   })
 })
+
+describe("issue params for translation", () => {
+  it("carries the values each dynamic message interpolates", () => {
+    const project = createStarter("hello-world")
+    project.blocks.verifier.push(createBlock(pytestVerifier))
+    project.blocks.environment.push(createBlock(lookup("slipway/apt-packages")!, { packages: [] }))
+    const issues = composeTask(project, lookup).issues
+    expect(issues.find((i) => i.code === "role-conflict")?.params).toEqual({
+      role: "runner",
+      part: "pytest",
+      partId: "slipway/pytest",
+      holder: "File matches",
+      holderId: "slipway/file-match",
+    })
+    expect(issues.find((i) => i.code === "missing-param")?.params).toEqual({
+      part: "apt packages",
+      partId: "slipway/apt-packages",
+      param: "Packages",
+      paramKey: "packages",
+    })
+  })
+
+  it("gives schema issues the failing keyword", () => {
+    const project = createStarter("hello-world")
+    project.config.agent = { timeout_sec: "soon" as unknown as number }
+    const schema = lintTask(project, composeTask(project, lookup)).find((i) => i.code === "schema")
+    expect(schema?.params).toMatchObject({ path: "agent.timeout_sec", keyword: "type" })
+    expect(schema?.message).toMatch(/agent\.timeout_sec/)
+  })
+})

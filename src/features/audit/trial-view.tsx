@@ -349,7 +349,7 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
           ) : parsed?.error ? (
             <p className="flex items-center gap-2 text-fail">
               <X className="size-4" aria-hidden />
-              {parsed.error}
+              {parsed.error.message}
             </p>
           ) : (
             parsed?.trajectory && (
