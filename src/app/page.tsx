@@ -3,76 +3,82 @@ import Link from "next/link"
 
 import { SiteNav } from "@/components/site-nav"
 import { Button } from "@/components/ui/button"
+import { getT } from "@/i18n/server"
 
-const STEPS = [
-  {
-    label: "Instruction",
-    text: "Write what the agent sees in instruction.md.",
-  },
-  {
-    label: "Environment",
-    text: "Stack a base image, packages, files and policies into environment/Dockerfile and task.toml.",
-  },
-  {
-    label: "Verifier",
-    text: "Pick a verifier that writes /logs/verifier/reward.txt: pytest, a command, a file match or your own script.",
-  },
-  {
-    label: "Solution",
-    text: "Add solution/solve.sh so oracle can score 1 while nop scores 0.",
-  },
-]
+export default async function Home() {
+  const t = await getT()
+  const notes = t.home.folderNotes
+  const folder: { path: string; depth: number; note?: string }[] = [
+    { path: "hello-world/", depth: 0 },
+    { path: "task.toml", depth: 1, note: notes.config },
+    { path: "instruction.md", depth: 1, note: notes.instruction },
+    { path: "environment/", depth: 1 },
+    { path: "Dockerfile", depth: 2, note: notes.dockerfile },
+    { path: "tests/", depth: 1 },
+    { path: "test.sh", depth: 2, note: notes.test },
+    { path: "solution/", depth: 1 },
+    { path: "solve.sh", depth: 2, note: notes.solve },
+  ]
 
-export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
       <SiteNav />
 
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 pt-12 pb-16 md:pt-20">
-        <section className="flex max-w-3xl flex-col items-start gap-6">
-          <h1 className="text-display font-bold md:text-display-xl">
-            Build Harbor tasks visually. Launch them anywhere.
-          </h1>
-          <p className="max-w-2xl text-ink-muted">
-            Harbor tasks are just folders — an instruction, a Dockerfile, a test script and an optional
-            solution. Slipway puts the whole task on one canvas: stack environment and verifier parts,
-            edit every file side by side, and Launch a folder that <code className="text-code">harbor run</code> takes
-            as-is.
+      <main className="mx-auto grid w-full max-w-7xl flex-1 items-start gap-12 px-4 pt-12 pb-16 md:px-6 md:pt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
+        <section className="flex flex-col items-start gap-6">
+          <h1 className="text-display font-bold text-balance md:text-display-xl">{t.home.tagline}</h1>
+          <p className="max-w-[60ch] text-ink-muted">
+            {t.home.lede}
+            <code className="text-code text-ink">harbor run</code>
+            {t.home.ledeEnd}
           </p>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Button asChild size="lg">
               <Link href="/studio">
-                Open Studio
+                {t.home.openStudio}
                 <ArrowRight />
               </Link>
             </Button>
             <Link href="/runs" className="text-tide underline-offset-4 hover:underline">
-              Audit a job&apos;s trajectories
+              {t.home.auditRuns}
             </Link>
           </div>
         </section>
 
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step, i) => (
-            <li key={step.label} className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4">
-              <span className="text-label uppercase text-ink-muted">
-                {i + 1} · {step.label}
-              </span>
-              <p className="text-body-sm">{step.text}</p>
-            </li>
-          ))}
-        </ol>
-
-        <section className="flex flex-col gap-2 rounded-lg bg-hull p-4 text-hull-ink">
-          <span className="text-label uppercase opacity-80">Then, in your terminal</span>
-          <pre className="overflow-x-auto text-code">
-            {"harbor run -p ./hello-world -a oracle   # expect 1\nharbor run -p ./hello-world -a nop      # expect 0"}
-          </pre>
-        </section>
+        <figure className="flex flex-col overflow-hidden rounded-lg bg-hull text-hull-ink">
+          <figcaption className="border-b border-white/10 px-5 py-3 text-label tracking-wide text-hull-muted uppercase">
+            {t.home.folderCaption}
+          </figcaption>
+          <ul className="flex flex-col gap-0.5 px-5 py-4 font-mono text-code">
+            {folder.map((entry) => (
+              <li key={entry.path + entry.depth} className="flex items-baseline gap-4">
+                <span
+                  className={entry.path.endsWith("/") ? "text-hull-ink" : "text-hull-tide"}
+                  style={{ paddingLeft: entry.depth * 18 }}
+                >
+                  {entry.path}
+                </span>
+                {entry.note && (
+                  <span className="ml-auto truncate pl-4 font-sans text-body-sm text-hull-muted">{entry.note}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="border-t border-white/10 px-5 py-4">
+            <p className="mb-2 text-label tracking-wide text-hull-muted uppercase">{t.home.thenRun}</p>
+            <pre className="overflow-x-auto text-code">
+              <span className="text-hull-muted">$ </span>harbor run -p ./hello-world -a oracle{"  "}
+              <span className="text-hull-pass">{t.home.expect1}</span>
+              {"\n"}
+              <span className="text-hull-muted">$ </span>harbor run -p ./hello-world -a nop{"     "}
+              <span className="text-hull-tide">{t.home.expect0}</span>
+            </pre>
+          </div>
+        </figure>
       </main>
 
-      <footer className="mx-auto w-full max-w-6xl px-4 py-6 text-body-sm text-ink-muted">
-        Slipway is a community tool for Harbor. Harbor-compatible, not an official Harbor project.
+      <footer className="border-t border-line">
+        <p className="mx-auto w-full max-w-7xl px-4 py-6 text-body-sm text-ink-muted md:px-6">{t.home.footer}</p>
       </footer>
     </div>
   )

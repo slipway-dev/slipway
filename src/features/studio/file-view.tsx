@@ -7,17 +7,23 @@ import type { PartLookup } from "@/features/parts/registry"
 import { MANAGED_PATHS, type FileOrigin, type TaskFile } from "@/features/task/compose"
 import type { TaskProject } from "@/features/task/model"
 import { useStudio } from "@/features/task/store"
+import type { Messages } from "@/i18n/messages"
+import { useT } from "@/i18n/provider"
+import { partText } from "@/i18n/text"
 
 import { CodeEditor, languageFor } from "./code-editor"
 import type { Selection } from "./slots"
 
-function describeOrigin(origin: FileOrigin, lookup: PartLookup): string {
-  if (origin.kind === "part") return `From the ${lookup(origin.partId)?.name ?? origin.partId} part`
-  if (origin.kind === "override") return "Written by you"
+function describeOrigin(t: Messages, origin: FileOrigin, lookup: PartLookup): string {
+  if (origin.kind === "part") {
+    const part = lookup(origin.partId)
+    return t.studio.file.fromPart(part ? partText(t, part).name : origin.partId)
+  }
+  if (origin.kind === "override") return t.studio.file.writtenByYou
   return {
-    config: "Generated from task settings and parts",
-    instruction: "Written in Instruction",
-    dockerfile: "Generated from environment parts",
+    config: t.studio.file.fromConfig,
+    instruction: t.studio.file.fromInstruction,
+    dockerfile: t.studio.file.fromDockerfile,
   }[origin.by]
 }
 
@@ -30,11 +36,13 @@ interface FileViewProps {
 }
 
 export function FileView({ project, file, path, lookup, onSelect }: FileViewProps) {
+  const t = useT()
+  const f = t.studio.file
   const setOverride = useStudio((s) => s.setOverride)
   const removeOverride = useStudio((s) => s.removeOverride)
 
   if (!file) {
-    return <p className="text-body-sm text-ink-muted">{path} is no longer part of this task.</p>
+    return <p className="text-body-sm text-ink-muted">{f.gone(path)}</p>
   }
 
   const managed = MANAGED_PATHS.includes(path)
@@ -48,9 +56,9 @@ export function FileView({ project, file, path, lookup, onSelect }: FileViewProp
           <h2 className="truncate font-mono text-code font-semibold">{path}</h2>
           <p className="text-body-sm text-ink-muted">
             {file.replaces
-              ? `Edited by you; replaces what ${describeOrigin(file.replaces, lookup).toLowerCase()} would write`
-              : describeOrigin(file.origin, lookup)}
-            {file.executable && " · executable"}
+              ? f.replaces(describeOrigin(t, file.replaces, lookup))
+              : describeOrigin(t, file.origin, lookup)}
+            {file.executable && ` · ${f.executable}`}
           </p>
         </div>
         {managed ? (
@@ -60,24 +68,24 @@ export function FileView({ project, file, path, lookup, onSelect }: FileViewProp
             onClick={() => onSelect(path === "task.toml" ? { kind: "settings" } : { kind: "instruction" })}
           >
             <Pencil />
-            Edit in {path === "task.toml" ? "Task settings" : "Instruction"}
+            {f.editIn(t.studio.sections[path === "task.toml" ? "settings" : "instruction"].label)}
           </Button>
         ) : file.origin.kind === "override" ? (
           file.replaces ? (
             <Button variant="outline" size="sm" onClick={() => removeOverride(project.id, path)}>
               <RotateCcw />
-              Revert to generated
+              {f.revert}
             </Button>
           ) : (
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                if (confirm(`Delete ${path}?`)) removeOverride(project.id, path)
+                if (confirm(f.confirmDelete(path))) removeOverride(project.id, path)
               }}
             >
               <Trash2 />
-              Delete file
+              {f.deleteFile}
             </Button>
           )
         ) : (
@@ -89,19 +97,18 @@ export function FileView({ project, file, path, lookup, onSelect }: FileViewProp
             }
           >
             <Pencil />
-            Edit by hand
+            {f.editByHand}
           </Button>
         )}
       </div>
       {!editable && !managed && (
         <p className="text-body-sm text-ink-muted">
-          Editing by hand stops parts from updating this file until you revert it.
+          {f.handEditNote}
         </p>
       )}
       {binary ? (
         <p className="rounded-md border border-line bg-surface p-4 text-body-sm">
-          Binary file, {Math.round((file.content.length * 3) / 4 / 1024)} KB. Slipway keeps it byte for byte and
-          writes it unchanged when you Launch; edit it with your own tools and import again.
+          {f.binary(Math.round((file.content.length * 3) / 4 / 1024))}
         </p>
       ) : (
         <CodeEditor

@@ -1,6 +1,6 @@
 "use client"
 
-import { Download } from "lucide-react"
+import { Download, X } from "lucide-react"
 import Link from "next/link"
 import { use, useEffect, useMemo, useState } from "react"
 
@@ -15,9 +15,11 @@ import { formatCost, formatDuration, formatReward, formatTokens } from "@/featur
 import { seconds, trajectoryPath, trialRoot, type TrialSummary } from "@/features/runs/job"
 import { annotationKey, loadJob, useRuns } from "@/features/runs/store"
 import { downloadBytes } from "@/features/studio/download"
+import { useT } from "@/i18n/provider"
 import { cn } from "@/lib/utils"
 
 import { AnnotationEditor } from "./annotation-editor"
+import { Figure } from "./job-view"
 import { FindingCounts, RewardValue, StatusLabel } from "./status"
 import { TextBlock } from "./text-block"
 import { TrajectoryView } from "./trajectory-view"
@@ -46,17 +48,14 @@ function useFileText(files: FileSet, path: string): string | undefined | null {
   return state?.path === path ? state.text : undefined
 }
 
-const PHASES = [
-  ["environment_setup", "Environment"],
-  ["agent_setup", "Agent setup"],
-  ["agent_execution", "Agent"],
-  ["verifier", "Verifier"],
-] as const
+const PHASES = ["environment_setup", "agent_setup", "agent_execution", "verifier"] as const
 
 function Timeline({ trial }: { trial: TrialSummary }) {
+  const t = useT().runs.trial
   const result = trial.result
   if (!result) return null
-  const phases = PHASES.flatMap(([key, label]) => {
+  const phases = PHASES.flatMap((key) => {
+    const label = t.phases[key]
     const sec = seconds(result[key])
     return sec === undefined ? [] : [{ key, label, sec }]
   })
@@ -64,7 +63,7 @@ function Timeline({ trial }: { trial: TrialSummary }) {
   if (!total) return null
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex h-2 overflow-hidden rounded-sm bg-surface-sunken" aria-hidden>
+      <div className="flex h-1.5 overflow-hidden rounded-sm bg-surface-sunken" aria-hidden>
         {phases.map((p) => (
           <div
             key={p.key}
@@ -73,7 +72,7 @@ function Timeline({ trial }: { trial: TrialSummary }) {
           />
         ))}
       </div>
-      <dl className="flex flex-wrap gap-x-5 gap-y-1 text-body-sm">
+      <dl aria-label={t.phaseTimeline} className="flex flex-wrap gap-x-5 gap-y-1 text-body-sm">
         {phases.map((p) => (
           <div key={p.key} className="flex gap-1">
             <dt className="text-ink-muted">{p.label}</dt>
@@ -93,11 +92,12 @@ function VerifierTab({ files, root, trial }: { files: FileSet; root: string; tri
     void readJson(files, `${root}/verifier/ctrf.json`).then((json) => setCtrf(parseCtrf(json)))
   }, [files, root])
   const rewards = Object.entries(trial.rewards)
+  const t = useT().runs.trial
 
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-2">
-        <h3 className="text-label uppercase text-ink-muted">Rewards</h3>
+        <h3 className="text-label uppercase text-ink-muted">{t.rewards}</h3>
         {rewards.length ? (
           <dl className="flex flex-wrap gap-x-6 gap-y-2">
             {rewards.map(([key, value]) => (
@@ -108,12 +108,12 @@ function VerifierTab({ files, root, trial }: { files: FileSet; root: string; tri
             ))}
           </dl>
         ) : (
-          <p className="text-body-sm text-ink-muted">The verifier wrote no reward.</p>
+          <p className="text-body-sm text-ink-muted">{t.noReward}</p>
         )}
       </section>
       {ctrf && (
         <section className="flex flex-col gap-2">
-          <h3 className="text-label uppercase text-ink-muted">Tests{ctrf.tool ? ` (${ctrf.tool})` : ""}</h3>
+          <h3 className="text-label uppercase text-ink-muted">{t.tests(ctrf.tool)}</h3>
           <ul className="flex flex-col gap-1">
             {ctrf.tests.map((test) => (
               <li key={test.name} className="flex flex-col gap-0.5 rounded-md border border-line bg-surface p-2 text-body-sm">
@@ -124,7 +124,7 @@ function VerifierTab({ files, root, trial }: { files: FileSet; root: string; tri
                       test.status === "passed" ? "text-pass" : test.status === "failed" ? "text-fail" : "text-warn",
                     )}
                   >
-                    {test.status === "passed" ? "✓ pass" : test.status === "failed" ? "✕ fail" : `! ${test.status}`}
+                    {t.testStatus[test.status] ?? test.status}
                   </span>
                   <code className="font-mono break-all">{test.name}</code>
                 </span>
@@ -139,7 +139,7 @@ function VerifierTab({ files, root, trial }: { files: FileSet; root: string; tri
           text != null && (
             <section key={name} className="flex flex-col gap-2">
               <h3 className="font-mono text-code text-ink-muted">verifier/{name}</h3>
-              <TextBlock text={text || "(empty)"} code maxLines={40} />
+              <TextBlock text={text || t.empty} code maxLines={40} />
             </section>
           ),
       )}
@@ -153,6 +153,8 @@ function FilesTab({ files, trial }: { files: FileSet; trial: string }) {
   const text = useFileText(files, selected ?? "")
   const blob = selected ? files.get(selected) : undefined
   const isImage = /\.(png|jpe?g|gif|webp)$/i.test(selected ?? "")
+  const t = useT().runs.trial
+  const common = useT().common
 
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
@@ -176,13 +178,13 @@ function FilesTab({ files, trial }: { files: FileSet; trial: string }) {
       </ul>
       <div className="min-w-0">
         {!selected ? null : isImage ? (
-          <p className="text-body-sm text-ink-muted">Image files show inline in the trajectory.</p>
+          <p className="text-body-sm text-ink-muted">{t.imageInline}</p>
         ) : blob && blob.size > 2_000_000 ? (
-          <p className="text-body-sm text-ink-muted">Too large to show here ({formatTokens(blob.size)}B).</p>
+          <p className="text-body-sm text-ink-muted">{t.tooLarge(formatTokens(blob.size))}</p>
         ) : text === undefined ? (
-          <p className="text-body-sm text-ink-muted">Loading…</p>
+          <p className="text-body-sm text-ink-muted">{common.loading}</p>
         ) : (
-          <TextBlock text={text || "(empty file)"} code maxLines={200} />
+          <TextBlock text={text || t.emptyFile} code maxLines={200} />
         )}
       </div>
     </div>
@@ -190,6 +192,8 @@ function FilesTab({ files, trial }: { files: FileSet; trial: string }) {
 }
 
 export function TrialView({ jobId, trialName }: { jobId: string; trialName: string }) {
+  const tr = useT().runs
+  const t = tr.trial
   const job = use(loadJob(jobId))
   const jobName = useRuns((s) => s.jobs[jobId]?.name)
   const annotations = useRuns((s) => s.annotations)
@@ -207,9 +211,9 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
   if (!job || !trial || !files) {
     return (
       <div className="flex flex-col items-start gap-2">
-        <p>This trial is not saved in this browser.</p>
+        <p>{t.notSaved}</p>
         <Link href="/runs" className="text-tide underline-offset-4 hover:underline">
-          Back to Runs
+          {tr.backToRuns}
         </Link>
       </div>
     )
@@ -237,9 +241,9 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <nav aria-label="Breadcrumb" className="flex flex-wrap gap-1 text-body-sm text-ink-muted">
+        <nav aria-label={tr.breadcrumb} className="flex flex-wrap gap-1 text-body-sm text-ink-muted">
           <Link href="/runs" className="hover:text-ink">
-            Runs
+            {tr.title}
           </Link>
           /
           <Link href={`/runs/${jobId}`} className="font-mono hover:text-ink">
@@ -251,7 +255,7 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
           <h1 className="font-mono text-title font-semibold break-all">{trialName}</h1>
           <Button variant="outline" size="sm" onClick={exportAudit}>
             <Download />
-            Export audit
+            {t.exportAudit}
           </Button>
         </div>
         <p className="text-body-sm text-ink-muted">
@@ -261,54 +265,61 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <div className="flex flex-col gap-1 rounded-md border border-line bg-surface p-4">
-          <span className="text-label uppercase text-ink-muted">Result</span>
-          <span className="flex items-center gap-3 text-title">
-            <StatusLabel status={trial.status} />
-            <RewardValue value={trial.reward} />
-          </span>
-        </div>
-        <div className="flex flex-col gap-1 rounded-md border border-line bg-surface p-4">
-          <span className="text-label uppercase text-ink-muted">Audit</span>
-          {parsed?.trajectory ? <FindingCounts findings={findings} /> : <span className="text-body-sm text-ink-muted">no trajectory</span>}
-        </div>
-        <div className="flex flex-col gap-1 rounded-md border border-line bg-surface p-4">
-          <span className="text-label uppercase text-ink-muted">Duration</span>
-          <span className="font-semibold tabular-nums">{formatDuration(trial.durationSec)}</span>
-        </div>
-        <div className="flex flex-col gap-1 rounded-md border border-line bg-surface p-4">
-          <span className="text-label uppercase text-ink-muted">Cost</span>
-          <span className="font-semibold tabular-nums">{formatCost(trial.costUsd)}</span>
-        </div>
+      <div className="flex flex-col gap-3 border-y border-line py-3">
+        <dl className="grid grid-cols-2 gap-x-8 gap-y-3 sm:flex sm:flex-wrap">
+          <Figure
+            label={t.result}
+            value={
+              <span className="flex items-center gap-3">
+                <StatusLabel status={trial.status} />
+                <RewardValue value={trial.reward} />
+              </span>
+            }
+          />
+          <Figure
+            label={t.audit}
+            value={
+              parsed?.trajectory ? (
+                <FindingCounts findings={findings} />
+              ) : (
+                <span className="text-body-sm font-normal text-ink-muted">{t.noTrajectory}</span>
+              )
+            }
+          />
+          <Figure label={t.duration} value={formatDuration(trial.durationSec)} />
+          <Figure label={t.cost} value={formatCost(trial.costUsd)} />
+        </dl>
+        <Timeline trial={trial} />
       </div>
-
-      <Timeline trial={trial} />
 
       {exception && (
         <section className="flex flex-col gap-2 rounded-md border border-fail bg-surface p-4">
-          <p className="font-semibold text-fail">
-            ✕ {exception.exception_type}: <span className="font-normal text-ink">{exception.exception_message}</span>
+          <p className="flex items-start gap-2">
+            <X className="mt-1 size-4 shrink-0 text-fail" strokeWidth={2.5} aria-hidden />
+            <span>
+              <span className="font-mono text-code font-semibold text-fail">{exception.exception_type}</span>{" "}
+              {exception.exception_message}
+            </span>
           </p>
           {exception.exception_traceback && (
             <details>
-              <summary className="cursor-pointer text-body-sm text-ink-muted">Traceback</summary>
+              <summary className="cursor-pointer text-body-sm text-ink-muted">{t.traceback}</summary>
               <TextBlock text={exception.exception_traceback} code maxLines={30} className="mt-2" />
             </details>
           )}
         </section>
       )}
 
-      <section className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4">
-        <h2 className="text-label uppercase text-ink-muted">Your verdict on this trial</h2>
+      <section className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h2 className="text-body-sm font-semibold">{t.verdictHeading}</h2>
         <AnnotationEditor annotationKey={annotationKey(jobId, trialName, "", "trial")} />
       </section>
 
       {trial.stepNames.length > 0 && (
         <div className="flex items-center gap-2">
-          <span className="text-body-sm text-ink-muted">Step</span>
+          <span className="text-body-sm text-ink-muted">{t.step}</span>
           <Select value={step} onValueChange={setStep}>
-            <SelectTrigger className="w-56" aria-label="Task step">
+            <SelectTrigger className="w-56" aria-label={t.stepLabel}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -324,20 +335,22 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
 
       <Tabs defaultValue="trajectory" className="gap-4">
         <TabsList>
-          <TabsTrigger value="trajectory">Trajectory</TabsTrigger>
-          <TabsTrigger value="verifier">Verifier</TabsTrigger>
-          <TabsTrigger value="files">Files</TabsTrigger>
+          <TabsTrigger value="trajectory">{t.tabs.trajectory}</TabsTrigger>
+          <TabsTrigger value="verifier">{t.tabs.verifier}</TabsTrigger>
+          <TabsTrigger value="files">{t.tabs.files}</TabsTrigger>
         </TabsList>
         <TabsContent value="trajectory">
           {trajectoryText === null ? (
             <p className="text-body-sm text-ink-muted">
-              This trial has no <code>agent/trajectory.json</code>. Agents such as <code>oracle</code> and{" "}
-              <code>nop</code> do not record one; their logs are under Files.
+              {t.noTrajectoryBody.map((part, i) => (i % 2 ? <code key={i}>{part}</code> : part))}
             </p>
           ) : trajectoryText === undefined ? (
-            <p className="text-body-sm text-ink-muted">Loading trajectory…</p>
+            <p className="text-body-sm text-ink-muted">{t.loadingTrajectory}</p>
           ) : parsed?.error ? (
-            <p className="text-fail">✕ {parsed.error}</p>
+            <p className="flex items-center gap-2 text-fail">
+              <X className="size-4" aria-hidden />
+              {parsed.error}
+            </p>
           ) : (
             parsed?.trajectory && (
               <TrajectoryView

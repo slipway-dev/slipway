@@ -5,10 +5,11 @@ import { contentText, pairToolCalls } from "@/features/runs/atif"
 import type { Finding } from "@/features/runs/audit"
 import { formatCost, formatOffset, formatTokens } from "@/features/runs/format"
 import type { Content, ObservationResult, Step, ToolCall } from "@/features/runs/types"
+import { useT } from "@/i18n/provider"
 import { cn } from "@/lib/utils"
 
 import { AnnotationEditor } from "./annotation-editor"
-import { SeverityGlyph } from "./status"
+import { findingMessage, SeverityGlyph } from "./status"
 import { TextBlock } from "./text-block"
 
 /** Argument keys agents use for the command itself, shown as code rather than as a field. */
@@ -18,15 +19,16 @@ const COMMAND_KEYS = ["command", "keystrokes", "cmd", "code", "script", "input"]
 const imageUrls = new WeakMap<Blob, string>()
 
 function ImagePart({ path, resolve }: { path: string; resolve: (path: string) => Blob | undefined }) {
+  const t = useT().runs.trajectory
   const blob = resolve(path)
   let url = blob ? imageUrls.get(blob) : undefined
   if (blob && !url) {
     url = URL.createObjectURL(blob)
     imageUrls.set(blob, url)
   }
-  if (!url) return <p className="text-body-sm text-ink-muted">Image not in the import: {path}</p>
+  if (!url) return <p className="text-body-sm text-ink-muted">{t.imageMissing(path)}</p>
   // eslint-disable-next-line @next/next/no-img-element -- local object URL, not an optimizable asset
-  return <img src={url} alt={`Screenshot ${path}`} className="max-h-96 rounded-md border border-line" />
+  return <img src={url} alt={t.imageAlt(path)} className="max-h-96 rounded-md border border-line" />
 }
 
 function ContentView({
@@ -70,6 +72,7 @@ function ToolCallView({
   const commandKey = COMMAND_KEYS.find((k) => typeof args[k] === "string")
   const rest = Object.entries(args).filter(([k]) => k !== commandKey)
   const flagged = findings.filter((f) => f.toolCallId === call.tool_call_id)
+  const t = useT().runs.trajectory
 
   return (
     <div className={cn("flex flex-col gap-2 rounded-md border border-line p-3", flagged.length && "border-line-strong")}>
@@ -103,7 +106,7 @@ function ToolCallView({
       )}
       {results.map((result, i) => (
         <div key={i} className="flex flex-col gap-1">
-          <span className="text-label uppercase text-ink-muted">Result</span>
+          <span className="text-label uppercase text-ink-muted">{t.result}</span>
           <ContentView content={result.content} resolve={resolve} code />
           {result.subagent_trajectory_ref?.map((ref) =>
             ref.trajectory_id ? (
@@ -113,11 +116,11 @@ function ToolCallView({
                 onClick={() => onOpenSubagent(ref.trajectory_id!)}
                 className="self-start rounded-sm text-body-sm text-tide underline-offset-4 hover:underline"
               >
-                Open subagent {ref.trajectory_id} →
+                {t.openSubagent(ref.trajectory_id)} →
               </button>
             ) : (
               <span key={ref.trajectory_path} className="text-body-sm text-ink-muted">
-                Subagent trajectory in {ref.trajectory_path}
+                {t.subagentIn(ref.trajectory_path ?? "")}
               </span>
             ),
           )}
@@ -148,6 +151,8 @@ export function StepCard({
   resolve,
   onOpenSubagent,
 }: StepCardProps) {
+  const tr = useT().runs
+  const t = tr.trajectory
   const { pairs, unpaired } = pairToolCalls(step)
   const m = step.metrics
   const offset = formatOffset(step.timestamp, startTime)
@@ -168,16 +173,16 @@ export function StepCard({
           #{step.step_id}
         </h3>
         <Badge variant={step.source === "agent" ? "secondary" : "outline"} className="text-label uppercase">
-          {step.source}
+          {t.sources[step.source] ?? step.source}
         </Badge>
-        {step.is_copied_context && <Badge variant="outline">copied context</Badge>}
+        {step.is_copied_context && <Badge variant="outline">{t.copiedContext}</Badge>}
         {offset && <span className="font-mono text-body-sm text-ink-muted">{offset}</span>}
         {step.model_name && step.model_name !== defaultModel && (
           <span className="text-body-sm text-ink-muted">{step.model_name}</span>
         )}
         {m && (m.prompt_tokens || m.completion_tokens || m.cost_usd) ? (
           <span className="ml-auto text-body-sm text-ink-muted tabular-nums">
-            {formatTokens(m.prompt_tokens)} in · {formatTokens(m.completion_tokens)} out
+            {tr.job.inOut(formatTokens(m.prompt_tokens), formatTokens(m.completion_tokens))}
             {m.cost_usd ? ` · ${formatCost(m.cost_usd)}` : ""}
           </span>
         ) : null}
@@ -188,7 +193,7 @@ export function StepCard({
           {[...stepFindings, ...callFindings].map((f, i) => (
             <li key={`${f.rule}-${i}`} className="flex flex-col gap-0.5">
               <span>
-                <SeverityGlyph severity={f.severity} /> {f.message}
+                <SeverityGlyph severity={f.severity} /> {findingMessage(tr, f)}
               </span>
               {f.evidence && <code className="font-mono break-all text-ink-muted">{f.evidence}</code>}
             </li>
@@ -200,7 +205,7 @@ export function StepCard({
 
       {step.reasoning_content && (
         <details className="rounded-md bg-surface-sunken p-3">
-          <summary className="cursor-pointer text-body-sm font-semibold text-ink-muted">Reasoning</summary>
+          <summary className="cursor-pointer text-body-sm font-semibold text-ink-muted">{t.reasoning}</summary>
           <TextBlock text={step.reasoning_content} className="mt-2 text-ink-muted" />
         </details>
       )}
@@ -219,7 +224,7 @@ export function StepCard({
       {unpaired.map((result, i) => (
         <div key={i} className="flex flex-col gap-1">
           <span className="text-label uppercase text-ink-muted">
-            {pairs.length > 1 ? "Output of the calls above" : "Output"}
+            {pairs.length > 1 ? t.outputShared : t.output}
           </span>
           <ContentView content={result.content} resolve={resolve} code />
         </div>

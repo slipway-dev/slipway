@@ -1,6 +1,6 @@
 "use client"
 
-import { FileArchive, FolderOpen, Sparkles } from "lucide-react"
+import { FileArchive, FolderOpen, Sparkles, Terminal } from "lucide-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -9,6 +9,7 @@ import { filesFromList, filesFromZip, JOB_LIMITS, type ImportReport } from "@/fe
 import { importJobs } from "@/features/runs/store"
 import { describeSkipped, filesFromDrop, filesFromInput, isZip, type PathedFile } from "@/lib/local-files"
 import { ImportBudget } from "@/lib/safe-files"
+import { useT } from "@/i18n/provider"
 import { cn } from "@/lib/utils"
 
 async function reportFrom(files: PathedFile[]): Promise<ImportReport> {
@@ -25,6 +26,7 @@ async function reportFrom(files: PathedFile[]): Promise<ImportReport> {
 }
 
 export function ImportPanel({ onImported }: { onImported: (ids: string[]) => void }) {
+  const t = useT().runs.import
   const folderInput = useRef<HTMLInputElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
@@ -36,15 +38,15 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
       const report = await load()
       const ids = await importJobs(report)
       if (ids.length === 0) {
-        toast.error("No Harbor job found. Choose a job folder from jobs/, a zip of one, or a trajectory.json.")
+        toast.error(t.noJob)
         return
       }
       const skipped = describeSkipped(report.skipped)
       if (skipped) toast.warning(skipped)
-      toast.success(ids.length === 1 ? "Imported 1 job" : `Imported ${ids.length} jobs`)
+      toast.success(t.imported(ids.length))
       onImported(ids)
     } catch (error) {
-      toast.error(`Could not import: ${(error as Error).message}`)
+      toast.error(t.failed((error as Error).message))
     } finally {
       setBusy(false)
     }
@@ -64,18 +66,15 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         void run(async () => reportFrom(await pending))
       }}
       className={cn(
-        "flex flex-col gap-4 rounded-lg border border-dashed border-line-strong bg-surface p-6",
-        dragging && "border-signal bg-surface-sunken",
+        "grid gap-x-8 gap-y-4 rounded-lg border border-dashed border-line-strong bg-surface p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]",
+        dragging && "border-solid border-tide bg-surface-sunken",
       )}
     >
       <div className="flex flex-col gap-1">
-        <p className="font-semibold">Drop a Harbor job here</p>
-        <p className="text-body-sm text-ink-muted">
-          A job folder from <code>jobs/</code>, the whole <code>jobs/</code> folder, a zip of either, or a single{" "}
-          <code>trajectory.json</code>. Files are read in this browser and never uploaded.
-        </p>
+        <h2 className="font-semibold">{dragging ? t.dropHere : t.title}</h2>
+        <p className="max-w-prose text-body-sm text-ink-muted">{t.body}</p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 md:col-start-1 md:row-start-2">
         <input
           ref={folderInput}
           type="file"
@@ -103,11 +102,11 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         />
         <Button variant="outline" disabled={busy} onClick={() => folderInput.current?.click()}>
           <FolderOpen />
-          Choose folder
+          {t.chooseFolder}
         </Button>
         <Button variant="outline" disabled={busy} onClick={() => fileInput.current?.click()}>
           <FileArchive />
-          Choose .zip or .json
+          {t.chooseFile}
         </Button>
         <Button
           variant="ghost"
@@ -115,18 +114,24 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
           onClick={() =>
             void run(async () => {
               const response = await fetch("/samples/sample-job.zip")
-              if (!response.ok) throw new Error(`sample download failed (${response.status})`)
+              if (!response.ok) throw new Error(t.sampleFailed(response.status))
               return filesFromZip(new Uint8Array(await response.arrayBuffer()))
             })
           }
         >
           <Sparkles />
-          Open the sample job
+          {t.sample}
         </Button>
       </div>
-      <pre className="overflow-x-auto rounded-md bg-hull p-3 text-code text-hull-ink">
-        {"cd jobs && zip -r ../my-job.zip 2026-10-20__14-02-11"}
-      </pre>
+      <figure className="flex min-w-0 flex-col gap-1.5 md:col-start-2 md:row-span-2 md:row-start-1">
+        <figcaption className="flex items-center gap-1.5 text-label uppercase text-ink-muted">
+          <Terminal className="size-3.5" aria-hidden />
+          {t.zipHint}
+        </figcaption>
+        <pre className="rounded-md bg-hull px-3 py-2.5 text-code break-all whitespace-pre-wrap text-hull-ink">
+          {"cd jobs && zip -r ../my-job.zip 2026-10-20__14-02-11"}
+        </pre>
+      </figure>
     </div>
   )
 }

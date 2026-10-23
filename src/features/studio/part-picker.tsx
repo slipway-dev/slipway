@@ -21,9 +21,11 @@ import { validateManifest } from "@/features/parts/manifest"
 import { partsForSlot } from "@/features/parts/registry"
 import type { PartManifest, SlotId } from "@/features/parts/types"
 import { useStudio } from "@/features/task/store"
+import { useT } from "@/i18n/provider"
+import { partText } from "@/i18n/text"
 
 import { CodeEditor } from "./code-editor"
-import { SECTIONS } from "./slots"
+import { sectionText } from "./slots"
 
 function exampleManifest(slot: SlotId): string {
   const examples: Record<SlotId, PartManifest> = {
@@ -90,6 +92,8 @@ interface PartPickerProps {
 }
 
 export function PartPicker({ slot, takenRoles, onAdd }: PartPickerProps) {
+  const t = useT()
+  const p = t.studio.picker
   const customParts = useStudio((s) => s.customParts)
   const saveCustomPart = useStudio((s) => s.saveCustomPart)
   const removeCustomPart = useStudio((s) => s.removeCustomPart)
@@ -110,22 +114,22 @@ export function PartPicker({ slot, takenRoles, onAdd }: PartPickerProps) {
     try {
       parsed = JSON.parse(draft)
     } catch (error) {
-      setErrors([`Not valid JSON: ${(error as Error).message}`])
+      setErrors([p.notJson((error as Error).message)])
       return
     }
     const problems = validateManifest(parsed)
     const part = parsed as PartManifest
     if (!problems.length && part.slot !== slot) {
-      problems.push(`This part is for ${part.slot}; open the picker from that section to add it.`)
+      problems.push(p.wrongSlot(part.slot))
     }
     setErrors(problems)
     if (problems.length) return
     saveCustomPart(part)
-    toast.success(`Saved ${part.name} to your parts`)
+    toast.success(p.saved(part.name))
     add(part)
   }
 
-  const meta = SECTIONS[slot]
+  const meta = sectionText(t, slot)
 
   return (
     <Dialog
@@ -138,25 +142,26 @@ export function PartPicker({ slot, takenRoles, onAdd }: PartPickerProps) {
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full border-dashed">
           <Plus />
-          Add part
+          {t.studio.blocks.addPart}
         </Button>
       </DialogTrigger>
       <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Add to {meta.label.toLowerCase()}</DialogTitle>
+          <DialogTitle>{p.title(meta.label)}</DialogTitle>
           <DialogDescription>{meta.hint}</DialogDescription>
         </DialogHeader>
         <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 flex-1 flex-col">
           <TabsList>
-            <TabsTrigger value="library">Parts</TabsTrigger>
-            <TabsTrigger value="custom">Make a part</TabsTrigger>
+            <TabsTrigger value="library">{p.library}</TabsTrigger>
+            <TabsTrigger value="custom">{p.make}</TabsTrigger>
           </TabsList>
           <TabsContent value="library" className="min-h-0 flex-1">
             <ScrollArea className="h-[min(60vh,480px)] pr-3">
               <ul className="flex flex-col gap-2">
                 {parts.map((part) => {
                   const blocked = Boolean(part.role && takenRoles.has(part.role))
-                  const custom = customParts.some((p) => p.id === part.id)
+                  const custom = customParts.some((c) => c.id === part.id)
+                  const text = partText(t, part)
                   return (
                     <li key={part.id} className="flex items-start gap-2">
                       <button
@@ -166,21 +171,21 @@ export function PartPicker({ slot, takenRoles, onAdd }: PartPickerProps) {
                         className="flex flex-1 flex-col items-start gap-1 rounded-md border border-line-strong bg-surface p-3 text-left hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <span className="flex flex-wrap items-center gap-2 font-semibold">
-                          {part.name}
+                          {text.name}
                           {part.role && <Badge variant="secondary" className="text-label uppercase">{part.role}</Badge>}
-                          {custom && <Badge variant="outline">yours</Badge>}
+                          {custom && <Badge variant="outline">{p.yours}</Badge>}
                         </span>
-                        <span className="text-body-sm text-ink-muted">{part.summary}</span>
+                        <span className="text-body-sm text-ink-muted">{text.summary}</span>
                         <span className="font-mono text-body-sm text-ink-muted">
                           {part.id}@{part.version}
-                          {blocked && ` · this task already has a ${part.role}`}
+                          {blocked && part.role && ` · ${p.roleTaken(part.role)}`}
                         </span>
                       </button>
                       {custom && (
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={`Delete ${part.name} from your parts`}
+                          aria-label={p.deleteCustom(text.name)}
                           onClick={() => removeCustomPart(part.id)}
                         >
                           <Trash2 />
@@ -194,11 +199,9 @@ export function PartPicker({ slot, takenRoles, onAdd }: PartPickerProps) {
           </TabsContent>
           <TabsContent value="custom" className="flex min-h-0 flex-1 flex-col gap-3">
             <p className="text-body-sm text-ink-muted">
-              A part is JSON: parameters plus the files, Dockerfile lines and <code>task.toml</code> values it
-              contributes, written with <code>{"{{param}}"}</code> templates. It is saved in this browser and
-              can be added to any task.
+              {p.makeHelp}
             </p>
-            <CodeEditor label="Part manifest" value={draft} onChange={setDraft} language="json" className="h-72 min-h-0" />
+            <CodeEditor label={p.manifest} value={draft} onChange={setDraft} language="json" className="h-72 min-h-0" />
             {errors.length > 0 && (
               <ul className="flex flex-col gap-1 text-body-sm text-fail" role="alert">
                 {errors.map((error) => (
@@ -208,10 +211,10 @@ export function PartPicker({ slot, takenRoles, onAdd }: PartPickerProps) {
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setDraft(exampleManifest(slot))}>
-                Reset example
+                {p.resetExample}
               </Button>
               <Button variant="secondary" onClick={saveDraft}>
-                Save and add
+                {p.saveAndAdd}
               </Button>
             </DialogFooter>
           </TabsContent>
