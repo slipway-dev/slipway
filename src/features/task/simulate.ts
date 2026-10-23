@@ -1,6 +1,7 @@
 import { runChecks, runSteps, type CheckResult, type StepResult } from "@/features/flow/simulate"
 import { isFlowValue, type FlowNode, type FlowValue, type RewardMode } from "@/features/flow/types"
 import { basename, cloneVFS, createVFS, mkdirP, normalizePath, parentOf, type VFS } from "@/features/flow/vfs"
+import type { PartLookup } from "@/features/parts/registry"
 import type { Block, ParamValue } from "@/features/parts/types"
 
 import type { TaskProject } from "./model"
@@ -44,6 +45,8 @@ export interface SimRun {
 export interface TaskSimulation {
   /** False unless the verifier is a Checks part, the only verifier Slipway can run itself. */
   supported: boolean
+  /** When unsupported: no verifier has been chosen yet, or it is one Slipway cannot run. */
+  unsupported?: "no-verifier" | "other-verifier"
   /** The checks, the way the verifier will run them. */
   checks: FlowNode[]
   rewardMode: RewardMode
@@ -126,13 +129,16 @@ function outcomeFor(spec: RunSpec, reward: number | undefined, failedAt: string 
   return (reward === 1) === (spec.expect === "pass") ? "as-expected" : "unexpected"
 }
 
-export function simulateTask(project: TaskProject): TaskSimulation {
+export function simulateTask(project: TaskProject, lookup?: PartLookup): TaskSimulation {
   const initial = initialFilesystem(project)
   const checksFlow = flowOf(active(project.blocks.verifier, CHECKS))
   const stepsFlow = flowOf(active(project.blocks.solution, STEPS))
   const checks = checksFlow?.nodes ?? []
   const rewardMode = checksFlow?.reward ?? "all"
-  if (!checksFlow) return { supported: false, checks, rewardMode, initial, runs: [] }
+  if (!checksFlow) {
+    const decides = project.blocks.verifier.some((b) => !b.disabled && (lookup ? lookup(b.partId)?.role === "runner" : true))
+    return { supported: false, unsupported: decides ? "other-verifier" : "no-verifier", checks, rewardMode, initial, runs: [] }
+  }
 
   const specs: RunSpec[] = [
     stepsFlow

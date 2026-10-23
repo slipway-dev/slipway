@@ -159,9 +159,13 @@ interface BlockListProps {
   slot: SlotId
   lookup: PartLookup
   issues: Issue[]
+  /** A block shown somewhere else, such as in the flow editor. It still counts for roles and order. */
+  exclude?: string
+  /** Show nothing but the add button while there is nothing else to list. */
+  quietWhenEmpty?: boolean
 }
 
-export function BlockList({ project, slot, lookup, issues }: BlockListProps) {
+export function BlockList({ project, slot, lookup, issues, exclude, quietWhenEmpty }: BlockListProps) {
   const t = useT()
   const moveBlock = useStudio((s) => s.moveBlock)
   const addBlock = useStudio((s) => s.addBlock)
@@ -170,6 +174,8 @@ export function BlockList({ project, slot, lookup, issues }: BlockListProps) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
   const blocks = project.blocks[slot]
+  // A block shown elsewhere (the flow editor) is left out here but still counts for roles and order.
+  const shown = blocks.filter((b) => b.id !== exclude)
   const takenRoles = new Set(
     blocks.filter((b) => !b.disabled).flatMap((b) => lookup(b.partId)?.role ?? []),
   )
@@ -184,15 +190,17 @@ export function BlockList({ project, slot, lookup, issues }: BlockListProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      {blocks.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-line-strong p-8 text-body-sm text-ink-muted">
-          {t.studio.blocks.empty} {sectionText(t, slot).hint}
-        </p>
+      {shown.length === 0 ? (
+        !quietWhenEmpty && (
+          <p className="rounded-xl border border-dashed border-line-strong p-8 text-body-sm text-ink-muted">
+            {t.studio.blocks.empty} {sectionText(t, slot).hint}
+          </p>
+        )
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={shown.map((b) => b.id)} strategy={verticalListSortingStrategy}>
             <ul className="flex flex-col gap-4">
-              {blocks.map((block) => (
+              {shown.map((block) => (
                 <BlockCard
                   key={block.id}
                   projectId={project.id}

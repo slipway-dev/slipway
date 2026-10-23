@@ -26,14 +26,15 @@ src/
 ├── components/brand/       logo
 └── features/
     ├── harbor/             Harbor's format: JSON Schema, paths, TOML, validation
+    ├── flow/               Checks and Steps: the node format, bash compiler, in-browser simulator
     ├── parts/              the part format, template language, built-in parts
     ├── task/               the project model, compose, lint, zip import/export, store
-    ├── studio/             the Studio UI
+    ├── studio/             the Studio UI: blueprint, workbench, source
     ├── runs/               Harbor job files: discovery, trial summaries, ATIF parsing, audit rules, store
     └── audit/              the Runs UI: job table, trial page, trajectory timeline
 ```
 
-Dependencies point one way: `studio → task → parts → harbor` and `audit → runs`. Nothing below the UI folders imports React except the two `store.ts` files.
+Dependencies point one way: `studio → task → parts → flow`, `parts → harbor` and `audit → runs`. Nothing below the UI folders imports React except the two `store.ts` files.
 
 ## The model
 
@@ -62,6 +63,27 @@ project ──compose()──▶ files + task.toml config ──lint()──▶ 
 - Launch zips keep Unix executable bits, so `harbor run -p ./<name>` works after unzip.
 
 Verified end to end: the Hello, world starter, launched from Slipway, scores 1.000 with `oracle` and 0.000 with `nop` in `harbor run`.
+
+## Studio: three layers
+
+Opening a task never starts in code. The Studio has three views, switched from the header:
+
+1. **Blueprint.** The ship, slightly tilted, comes apart into five parts: hull (environment), cargo (instruction), bridge (verifier), helm (solution) and mast (task settings). Each shows its state and, once there is something to say, the live oracle and nop rewards. Click a part to edit it. The animation plays once per entry (see the motion exception in `docs/brand/README.md`); reduced motion shows the parts already apart.
+2. **Workbench.** Edit on the left, see the consequence on the right. Verifier and solution are pipelines of nodes instead of scripts; the other slots use plain forms plus instruction hints.
+3. **Source.** The file tree and a raw editor, for what the first two cannot express or when the UI gets in the way. Edits become overrides, as before.
+
+## Flows: Checks and Steps
+
+`features/flow` holds the two node lists behind the workbench, stored as JSON in a part parameter (`FlowValue {nodes, reward?}`):
+
+- **Checks** (verifier): file exists, directory exists, file absent, file equals, file contains, command succeeds, command output. The reward is `all` (1 or 0) or `weighted` (integer weights, truncated to four decimals).
+- **Steps** (solution): write file, append, make directory, delete, run command.
+
+Each list compiles to bash for `test.sh` / `solve.sh`, and the same list is simulated in a virtual filesystem. An incomplete node always fails (checks) or aborts (steps), so a half-built flow can never score 1 or delete the wrong thing.
+
+The simulator (`features/task/simulate.ts`) answers three questions without Docker: does the oracle score 1, does the nop agent score 0, and do the author's *what-ifs* (scenarios, stored in the project) pass or fail as expected. It models files and directories only. Whenever a result depends on running a command, it says **unknown** rather than guess.
+
+How we know it matches reality: differential tests run the compiled bash in a sandbox against the simulator on seeded random flows, and mutation tests confirm the suite catches deliberate simulator bugs. The workbench predictions were also compared with a real `harbor run` (oracle, nop, partial credit, exact-versus-trim matching, a COPY'd file): all matched.
 
 ## Auditing runs
 

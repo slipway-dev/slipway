@@ -4,7 +4,7 @@ import { makeNode, newNodeId } from "@/features/flow/types"
 import { environmentFile } from "@/features/parts/builtin/environment"
 import { scriptVerifier } from "@/features/parts/builtin/verifier"
 import { shellSolution } from "@/features/parts/builtin/solution"
-import { createBlock } from "@/features/parts/registry"
+import { createBlock, createLookup } from "@/features/parts/registry"
 
 import type { Scenario, TaskProject } from "../model"
 import { initialFilesystem, simulateTask, simulationSummary } from "../simulate"
@@ -73,7 +73,17 @@ describe("what Slipway will not guess", () => {
   it("does not simulate a verifier that is a script", () => {
     const project = createStarter("hello-world")
     project.blocks.verifier = [createBlock(scriptVerifier)]
-    expect(simulateTask(project)).toMatchObject({ supported: false, runs: [] })
+    expect(simulateTask(project)).toMatchObject({ supported: false, unsupported: "other-verifier", runs: [] })
+  })
+
+  it("tells a verifier not chosen yet from one Slipway cannot run", () => {
+    const project = createStarter("hello-world")
+    project.blocks.verifier = []
+    expect(simulateTask(project)).toMatchObject({ supported: false, unsupported: "no-verifier" })
+    // Variables for the verifier do not decide anything, so they do not count as a way of deciding.
+    project.blocks.verifier = [createBlock(createLookup()("slipway/verifier-env")!)]
+    expect(simulateTask(project, createLookup())).toMatchObject({ unsupported: "no-verifier" })
+    expect(simulateTask(createStarter("hello-world")).unsupported).toBeUndefined()
   })
 
   it("still runs nop and scenarios when the solution is a script", () => {

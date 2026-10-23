@@ -9,6 +9,7 @@ import type { IssueCode } from "@/features/task/issues"
 import type { TrajectoryProblemCode } from "@/features/runs/atif"
 import type { SkipCode } from "@/lib/safe-files"
 
+import { enBench } from "./en-bench"
 import { enFlow } from "./en-flow"
 import { enRuns } from "./en-runs"
 
@@ -278,6 +279,8 @@ export const en = {
   runs: enRuns,
 
   flow: enFlow,
+
+  ...enBench,
 
   /** Lint and compose messages by issue code; `p` holds Issue.params with part and parameter names already translated. */
   issues: {

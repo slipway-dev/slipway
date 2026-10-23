@@ -1,5 +1,6 @@
 import type { Messages } from "./en"
 import { zhParts } from "./zh-parts"
+import { zhBench } from "./zh-bench"
 import { zhFlow } from "./zh-flow"
 import { zhRuns } from "./zh-runs"
 
@@ -268,6 +269,8 @@ export const zh: Messages = {
   runs: zhRuns,
 
   flow: zhFlow,
+
+  ...zhBench,
 
   issues: {
     "unknown-part": (p) => `部件 ${p.partId} 未安装。`,
