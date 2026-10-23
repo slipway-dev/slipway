@@ -20,79 +20,40 @@ import { taskDirName, taskTitle, type TaskProject } from "@/features/task/model"
 import { useHydrated, usePartLookup, useStudio } from "@/features/task/store"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { useT } from "@/i18n/provider"
+import { simulateTask } from "@/features/task/simulate"
 
-import { BlockList } from "./block-list"
+import { Blueprint } from "./blueprint/blueprint"
 import { CheckBar, ChecksPanel } from "./check-bar"
 import { CodeEditor } from "./code-editor"
 import { downloadBytes } from "./download"
 import { FileView } from "./file-view"
-import { GeneratedFiles } from "./generated-files"
-import { SettingsForm } from "./settings-form"
-import { SECTIONS, sectionText, type Selection } from "./slots"
+import type { SectionKey, Selection } from "./slots"
 import { TaskTree } from "./task-tree"
+import { SimBadge, ViewSwitch, type ViewMode } from "./view-switch"
+import { Workbench } from "./workbench/workbench"
 import { NewFileDialog } from "./new-file-dialog"
 
 type MobileTab = "files" | "edit" | "checks"
 
-/** Structured editor on the left, the files it generates on the right. */
-function Split({ wide, editor, output }: { wide: boolean; editor: React.ReactNode; output: React.ReactNode }) {
-  if (!wide) {
-    return (
-      <ScrollArea className="h-full">
-        <div className="flex flex-col gap-6 p-4">
-          {editor}
-          <div className="h-96">{output}</div>
-        </div>
-      </ScrollArea>
-    )
-  }
-  return (
-    <ResizablePanelGroup orientation="horizontal" className="min-h-0">
-      <ResizablePanel defaultSize="50" minSize={360}>
-        <ScrollArea className="h-full">
-          <div className="p-8">{editor}</div>
-        </ScrollArea>
-      </ResizablePanel>
-      <ResizableHandle />
-      <ResizablePanel defaultSize="50" minSize={320}>
-        <div className="h-full p-4">{output}</div>
-      </ResizablePanel>
-    </ResizablePanelGroup>
-  )
-}
+/** Blueprint, the workbench of one part, or the source files. */
+type View =
+  | { mode: "blueprint" }
+  | { mode: "bench"; part: SectionKey }
+  | { mode: "source"; selection: Selection }
 
-function SectionHeader({ section }: { section: keyof typeof SECTIONS }) {
-  const t = useT()
-  const { label, hint } = sectionText(t, section)
-  const Icon = SECTIONS[section].icon
-  return (
-    <div className="mb-8 flex flex-col gap-1.5">
-      <h2 className="flex items-baseline gap-2 text-title font-semibold">
-        <Icon className="size-5 shrink-0 translate-y-0.5 self-start text-ink-muted" aria-hidden />
-        {label}
-        <span className="font-mono text-code font-normal text-ink-muted">{SECTIONS[section].target}</span>
-      </h2>
-      <p className="max-w-prose text-body-sm text-ink-muted">{hint}</p>
-    </div>
-  )
-}
-
+/** The source layer: the raw instruction and every file the task is made of. */
 function Canvas({
   project,
   selection,
   onSelect,
   files,
-  issues,
   lookup,
-  wide,
 }: {
   project: TaskProject
   selection: Selection
   onSelect: (selection: Selection) => void
   files: TaskFile[]
-  issues: Issue[]
   lookup: ReturnType<typeof usePartLookup>
-  wide: boolean
 }) {
   const updateProject = useStudio((s) => s.updateProject)
 
@@ -113,7 +74,6 @@ function Canvas({
   if (selection.kind === "instruction") {
     return (
       <div className="flex h-full min-h-0 flex-col p-4 lg:p-8">
-        <SectionHeader section="instruction" />
         <CodeEditor
           label="instruction.md"
           value={project.instruction}
@@ -126,35 +86,7 @@ function Canvas({
     )
   }
 
-  if (selection.kind === "settings") {
-    return (
-      <Split
-        wide={wide}
-        editor={
-          <>
-            <SectionHeader section="settings" />
-            <SettingsForm project={project} />
-          </>
-        }
-        output={<GeneratedFiles files={files.filter((f) => f.path === "task.toml")} onSelect={onSelect} />}
-      />
-    )
-  }
-
-  const dir = SECTIONS[selection.slot].target
-  return (
-    <Split
-      key={selection.slot}
-      wide={wide}
-      editor={
-        <>
-          <SectionHeader section={selection.slot} />
-          <BlockList project={project} slot={selection.slot} lookup={lookup} issues={issues} />
-        </>
-      }
-      output={<GeneratedFiles files={files.filter((f) => f.path.startsWith(dir))} onSelect={onSelect} />}
-    />
-  )
+  return null
 }
 
 export function Studio({ id }: { id: string }) {
@@ -163,7 +95,18 @@ export function Studio({ id }: { id: string }) {
   const project = useStudio((s) => s.projects[id])
   const setOverride = useStudio((s) => s.setOverride)
   const lookup = usePartLookup()
-  const [selection, setSelection] = useState<Selection>({ kind: "instruction" })
+  const [view, setView] = useState<View>({ mode: "blueprint" })
+  const [played, setPlayed] = useState(false)
+  const selection: Selection =
+    view.mode === "source"
+      ? view.selection
+      : view.mode === "bench"
+        ? view.part === "instruction"
+          ? { kind: "instruction" }
+          : view.part === "settings"
+            ? { kind: "settings" }
+            : { kind: "slot", slot: view.part }
+        : { kind: "instruction" }
   const [mobileTab, setMobileTab] = useState<MobileTab>("edit")
   const [newFileOpen, setNewFileOpen] = useState(false)
   const wide = useMediaQuery("(min-width: 1024px)")
@@ -173,11 +116,12 @@ export function Studio({ id }: { id: string }) {
     () => (project && composed ? lintTask(project, composed) : []),
     [project, composed],
   )
+  const simulation = useMemo(() => (project ? simulateTask(project, lookup) : undefined), [project, lookup])
 
   if (!hydrated) {
     return <p className="p-4 text-body-sm text-ink-muted">{t.studio.loading}</p>
   }
-  if (!project || !composed) {
+  if (!project || !composed || !simulation) {
     return (
       <div className="flex flex-col items-start gap-4 p-4">
         <p>{t.studio.notSaved}</p>
@@ -190,9 +134,17 @@ export function Studio({ id }: { id: string }) {
 
   const dirName = taskDirName(project)
 
+  /** Sections open their workbench; files and the raw instruction open the source. */
   function select(next: Selection) {
-    setSelection(next)
+    if (next.kind === "slot") setView({ mode: "bench", part: next.slot })
+    else if (next.kind === "settings") setView({ mode: "bench", part: "settings" })
+    else setView({ mode: "source", selection: next })
     setMobileTab("edit")
+  }
+
+  function switchView(mode: ViewMode) {
+    if (mode === "blueprint") setView({ mode: "blueprint" })
+    else setView({ mode: "source", selection: selection.kind === "file" ? selection : { kind: "instruction" } })
   }
 
   function selectIssue(issue: Issue) {
@@ -239,9 +191,7 @@ export function Studio({ id }: { id: string }) {
       selection={selection}
       onSelect={select}
       files={composed.files}
-      issues={issues}
       lookup={lookup}
-      wide={wide}
     />
   )
   const errorCount = issues.filter((i) => i.severity === "error").length
@@ -249,7 +199,7 @@ export function Studio({ id }: { id: string }) {
   return (
     <div className="flex h-dvh flex-col">
       <NewFileDialog open={newFileOpen} onOpenChange={setNewFileOpen} onCreate={addFile} />
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b border-line bg-paper px-4 lg:px-5">
+      <header className="flex min-h-16 shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-paper px-4 py-2 lg:px-5 lg:py-0">
         <Link
           href="/studio"
           className="flex items-center gap-1.5 rounded-sm p-1 text-ink-muted hover:text-ink"
@@ -261,17 +211,11 @@ export function Studio({ id }: { id: string }) {
         </Link>
         <span aria-hidden className="h-5 w-px bg-line" />
         <h1 className="min-w-0 flex-1 truncate font-mono text-code font-semibold">{taskTitle(project)}</h1>
-        <span className="hidden items-center gap-3 text-body-sm lg:flex" title={t.studio.checks.verifyHelp}>
-          <span>
-            <code className="text-code">oracle</code> {t.studio.checks.expects1}
-          </span>
-          <span>
-            <code className="text-code">nop</code> {t.studio.checks.expected0}
-          </span>
-          <span className="rounded-sm border border-line px-1.5 text-label text-ink-muted">
-            {t.studio.checks.unverified}
-          </span>
-        </span>
+        <SimBadge simulation={simulation} />
+        {/* On a narrow screen the switch gets a row of its own below the title. */}
+        <div className="order-last flex w-full justify-center sm:order-none sm:w-auto">
+          <ViewSwitch active={view.mode === "source" ? "source" : "blueprint"} onChange={switchView} />
+        </div>
         <LocaleSwitch />
         <Button variant="signal" onClick={launch}>
           <Rocket />
@@ -279,7 +223,34 @@ export function Studio({ id }: { id: string }) {
         </Button>
       </header>
 
-      {wide ? (
+      {view.mode === "blueprint" ? (
+        <div className="min-h-0 flex-1 overflow-y-auto bg-paper">
+          <Blueprint
+            project={project}
+            issues={issues}
+            simulation={simulation}
+            lookup={lookup}
+            animate={!played}
+            onPlayed={() => setPlayed(true)}
+            onOpen={(part) => setView({ mode: "bench", part })}
+          />
+        </div>
+      ) : view.mode === "bench" ? (
+        <div className="min-h-0 flex-1 bg-paper">
+          <Workbench
+            part={view.part}
+            project={project}
+            files={composed.files}
+            issues={issues}
+            simulation={simulation}
+            lookup={lookup}
+            dirName={dirName}
+            wide={wide}
+            onBack={() => setView({ mode: "blueprint" })}
+            onSource={select}
+          />
+        </div>
+      ) : wide ? (
         <>
           <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
             <ResizablePanel defaultSize="20" minSize={240} maxSize={480} className="bg-surface-sunken">

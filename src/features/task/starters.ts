@@ -1,6 +1,7 @@
 import { baseImage } from "@/features/parts/builtin/environment"
-import { shellSolution } from "@/features/parts/builtin/solution"
-import { fileMatchVerifier, scriptVerifier } from "@/features/parts/builtin/verifier"
+import { makeNode } from "@/features/flow/types"
+import { shellSolution, stepsSolution } from "@/features/parts/builtin/solution"
+import { checksVerifier, scriptVerifier } from "@/features/parts/builtin/verifier"
 import { createBlock } from "@/features/parts/registry"
 
 import type { TaskProject } from "./model"
@@ -32,7 +33,7 @@ export const STARTERS: { id: StarterId; name: string; summary: string }[] = [
   {
     id: "hello-world",
     name: "Hello, world",
-    summary: "A complete task: the agent writes one file, the verifier checks it, the solution shows it works.",
+    summary: "A complete task made of checks and steps: the agent writes one file, a check verifies it, the solution shows it works.",
   },
   {
     id: "blank",
@@ -59,11 +60,16 @@ export function createStarter(id: StarterId): TaskProject {
     project.blocks = {
       environment: [createBlock(baseImage)],
       verifier: [
-        createBlock(fileMatchVerifier, { path: "/app/hello.txt", expected: "Hello, world!" }),
+        createBlock(checksVerifier, {
+          flow: {
+            nodes: [makeNode("checks", "file-equals", { path: "/app/hello.txt", expected: "Hello, world!" })],
+            reward: "all",
+          },
+        }),
       ],
       solution: [
-        createBlock(shellSolution, {
-          script: '#!/bin/bash\n\necho "Hello, world!" > /app/hello.txt\n',
+        createBlock(stepsSolution, {
+          flow: { nodes: [makeNode("steps", "write-file", { path: "/app/hello.txt", content: "Hello, world!" })] },
         }),
       ],
     }

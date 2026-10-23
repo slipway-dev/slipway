@@ -15,6 +15,7 @@ const PARAM_TYPES: readonly ParamType[] = [
   "enum",
   "list",
   "map",
+  "flow",
 ]
 
 /** Files Slipway writes itself; parts may not replace them. */
@@ -88,6 +89,9 @@ export function validateManifest(input: unknown): string[] {
       }
       if (p.type === "enum" && (!Array.isArray(p.options) || p.options.length === 0)) {
         errors.push(`params[${i}].options is required for enum`)
+      }
+      if (p.type === "flow" && p.flow !== "checks" && p.flow !== "steps") {
+        errors.push(`params[${i}].flow must be "checks" or "steps" for a flow`)
       }
     })
   }

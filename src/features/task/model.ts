@@ -1,3 +1,4 @@
+import type { FlowNode } from "@/features/flow/types"
 import type { TaskConfig } from "@/features/harbor/task-config"
 import type { Block, SlotId } from "@/features/parts/types"
 
@@ -7,6 +8,18 @@ export interface FileOverride {
   content: string
   encoding?: "base64"
   executable?: boolean
+}
+
+/**
+ * A "what if" for the simulator: steps an agent might take, and whether the
+ * verifier should then pass. A good verifier fails the lazy and wrong ones.
+ */
+export interface Scenario {
+  id: string
+  name: string
+  /** Steps like a solution's, run on the starting filesystem. */
+  steps: FlowNode[]
+  expect: "pass" | "fail"
 }
 
 /**
@@ -25,6 +38,8 @@ export interface TaskProject {
   blocks: Record<SlotId, Block[]>
   /** Keyed by path relative to the task root. */
   overrides: Record<string, FileOverride>
+  /** Absent in projects saved before scenarios existed. */
+  scenarios?: Scenario[]
 }
 
 /** "org/name" → "name", used for the Launch folder and run commands. */

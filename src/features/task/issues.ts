@@ -13,6 +13,7 @@ export const ISSUE_CODES = [
   "bad-path", // { part, partId, path }
   "file-conflict", // { part, partId, path }
   "template-error", // { part, partId, detail }
+  "flow-incomplete", // { part, partId, node, nodeId, problem, field? }
   // lint
   "schema", // { path, keyword, detail }
   "task-name",

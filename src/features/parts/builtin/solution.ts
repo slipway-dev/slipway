@@ -1,5 +1,28 @@
 import type { PartManifest } from "../types"
 
+export const stepsSolution: PartManifest = {
+  id: "slipway/solution-steps",
+  version: "1.0.0",
+  name: "Steps",
+  summary:
+    "A list of steps that solve the task: write a file, make a folder, run a command. Slipway writes solve.sh and can carry the steps out against the checks here.",
+  slot: "solution",
+  role: "solver",
+  params: [
+    {
+      key: "flow",
+      label: "Steps",
+      type: "flow",
+      flow: "steps",
+      required: true,
+      default: { nodes: [] },
+    },
+  ],
+  contributes: {
+    files: [{ path: "solution/solve.sh", executable: true, template: "{{flow|steps-script}}" }],
+  },
+}
+
 export const shellSolution: PartManifest = {
   id: "slipway/shell-solution",
   version: "1.0.0",
@@ -37,4 +60,4 @@ export const solutionFile: PartManifest = {
   },
 }
 
-export const solutionParts = [shellSolution, solutionFile]
+export const solutionParts = [stepsSolution, shellSolution, solutionFile]

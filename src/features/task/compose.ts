@@ -1,3 +1,4 @@
+import { isFlowValue, nodeIssues, nodeLabel, PROBLEM_TEXT } from "@/features/flow/types"
 import { TASK_PATHS, TASK_SCHEMA_VERSION } from "@/features/harbor/constants"
 import type { TaskConfig } from "@/features/harbor/task-config"
 import { stringifyTaskConfig } from "@/features/harbor/toml"
@@ -148,6 +149,26 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
             params: { part: part.name, partId: part.id, param: spec.label, paramKey: spec.key },
             blockId: block.id,
           })
+        }
+        if (spec.type === "flow" && spec.flow && isFlowValue(value)) {
+          for (const node of value.nodes) {
+            for (const problem of nodeIssues(spec.flow, node)) {
+              issues.push({
+                severity: "error",
+                code: "flow-incomplete",
+                message: `${part.name}: "${nodeLabel(node)}" ${PROBLEM_TEXT[problem.problem](problem.field ?? "")}.`,
+                params: {
+                  part: part.name,
+                  partId: part.id,
+                  node: nodeLabel(node),
+                  nodeId: node.id,
+                  problem: problem.problem,
+                  ...(problem.field ? { field: problem.field } : {}),
+                },
+                blockId: block.id,
+              })
+            }
+          }
         }
       }
 
