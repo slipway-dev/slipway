@@ -28,7 +28,8 @@ describe("ImportBudget", () => {
     expect(budget.admit("../escape", 10)).toBeUndefined()
     for (let i = 0; i < 3; i++) expect(budget.admit(`f${i}`, 1024)).toBe(`f${i}`)
     expect(budget.admit("over-total", 1024)).toBeUndefined()
-    expect(budget.skipped.map((s) => s.reason)).toEqual(["larger than 0 MB", "unsafe path", "import over 0 MB"])
+    expect(budget.skipped.map((s) => s.code)).toEqual(["too-large", "unsafe-path", "over-total"])
+    expect(budget.skipped[0].params).toEqual({ limitMB: 0 })
   })
 
   it("caps the number of files", () => {
@@ -45,7 +46,9 @@ describe("unzipWithin", () => {
     const budget = new ImportBudget(LIMITS)
     const files = unzipWithin(zip, budget, LIMITS)
     expect([...files.keys()]).toEqual(["ok.txt"])
-    expect(budget.skipped).toEqual([{ path: "bomb.bin", reason: "larger than 0 MB" }])
+    expect(budget.skipped).toEqual([
+      { path: "bomb.bin", code: "too-large", params: { limitMB: 0 }, reason: "larger than 0 MB" },
+    ])
   })
 
   it("drops entries with unsafe names", () => {
@@ -63,5 +66,20 @@ describe("text and bytes", () => {
     expect(decodeText(new Uint8Array([0xff, 0xfe, 0x41]))).toBeUndefined()
     const bytes = new Uint8Array(100_000).map((_, i) => (i * 31) % 256)
     expect(fromBase64(toBase64(bytes))).toEqual(bytes)
+  })
+})
+
+describe("groupSkipped", () => {
+  it("groups by code and params for a translated summary", async () => {
+    const { describeSkipped, groupSkipped } = await import("../local-files")
+    const budget = new ImportBudget(LIMITS)
+    budget.admit("a.bin", 2048)
+    budget.admit("b.bin", 4096)
+    budget.admit("../x", 1)
+    expect(groupSkipped(budget.skipped)).toEqual([
+      { code: "too-large", params: { limitMB: 0 }, count: 2, reason: "larger than 0 MB" },
+      { code: "unsafe-path", params: undefined, count: 1, reason: "unsafe path" },
+    ])
+    expect(describeSkipped(budget.skipped)).toBe("Skipped 3 files: 2 larger than 0 MB, 1 unsafe path.")
   })
 })

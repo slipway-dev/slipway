@@ -88,7 +88,8 @@ Lint issues and audit findings carry a stable id the UI translates by, with Engl
 
 - `Issue.code` is one of `ISSUE_CODES` (`features/task/issues.ts`). Codes whose text names a part, path or schema error carry `params` with those values; the list documents which. `message` is the English text.
 - `Finding.rule` is one of `FINDING_RULES` (`features/runs/audit.ts`). Rule messages are fixed, so there are no params; `evidence` is the agent's own text and is never translated.
-- Both lists are `as const`, so a translation dictionary typed against `IssueCode` or `FindingRule` fails to compile when a rule is added and left untranslated.
+- Trajectory read problems (`TRAJECTORY_PROBLEM_CODES`, `features/runs/atif.ts`) and files skipped on import (`SKIP_CODES`, `lib/safe-files.ts`, grouped for a summary by `groupSkipped`) follow the same shape: `code`, optional `params`, English fallback.
+- All these lists are `as const`, so a translation dictionary typed against `IssueCode` or `FindingRule` fails to compile when a rule is added and left untranslated.
 - Built-in part names, summaries and parameter labels may be translated by part id with the manifest text as fallback. Third-party and user-made parts are data and stay as their authors wrote them.
 
 ## Local files, privacy and untrusted input
