@@ -1,0 +1,16 @@
+{
+  "task": {
+    "path": "csv-stats"
+  },
+  "trial_name": "csv-stats__a1B2c3D",
+  "trials_dir": "/jobs/2026-10-20__14-02-11",
+  "agent": {
+    "name": "claude-code",
+    "model_name": "anthropic/claude-sonnet-5-5"
+  },
+  "environment": {
+    "type": "docker"
+  },
+  "verifier": {},
+  "job_id": "6f1c2a8e-3b7d-4e59-9a40-1d2e3f4a5b6c"
+}

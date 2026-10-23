@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 
-import { SlipwayLogo } from "@/components/brand/logo"
+import { SiteNav } from "@/components/site-nav"
 import { Button } from "@/components/ui/button"
 
 const STEPS = [
@@ -26,16 +26,9 @@ const STEPS = [
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4">
-        <SlipwayLogo />
-        <nav className="flex items-center gap-4 text-body-sm">
-          <a href="https://harborframework.com/docs" className="text-tide underline-offset-4 hover:underline">
-            Harbor docs
-          </a>
-        </nav>
-      </header>
+      <SiteNav />
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 pt-12 pb-16 md:pt-20">
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 pt-12 pb-16 md:pt-20">
         <section className="flex max-w-3xl flex-col items-start gap-6">
           <h1 className="text-display font-bold md:text-display-xl">
             Build Harbor tasks visually. Launch them anywhere.
@@ -46,12 +39,17 @@ export default function Home() {
             edit every file side by side, and Launch a folder that <code className="text-code">harbor run</code> takes
             as-is.
           </p>
-          <Button asChild size="lg">
-            <Link href="/studio">
-              Open Studio
-              <ArrowRight />
+          <div className="flex flex-wrap items-center gap-4">
+            <Button asChild size="lg">
+              <Link href="/studio">
+                Open Studio
+                <ArrowRight />
+              </Link>
+            </Button>
+            <Link href="/runs" className="text-tide underline-offset-4 hover:underline">
+              Audit a job&apos;s trajectories
             </Link>
-          </Button>
+          </div>
         </section>
 
         <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -73,7 +71,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="mx-auto w-full max-w-5xl px-4 py-6 text-body-sm text-ink-muted">
+      <footer className="mx-auto w-full max-w-6xl px-4 py-6 text-body-sm text-ink-muted">
         Slipway is a community tool for Harbor. Harbor-compatible, not an official Harbor project.
       </footer>
     </div>

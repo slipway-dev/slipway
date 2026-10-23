@@ -1,22 +1,15 @@
 "use client"
 
-import { del, get, set } from "idb-keyval"
 import { useMemo, useSyncExternalStore } from "react"
 import { create } from "zustand"
-import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
 
 import { createBlock, createLookup, type PartLookup } from "@/features/parts/registry"
 import type { Block, ParamValue, PartManifest, SlotId } from "@/features/parts/types"
+import { idbStorage } from "@/lib/idb-storage"
 
 import type { FileOverride, TaskProject } from "./model"
 import { createStarter, type StarterId } from "./starters"
-
-/** IndexedDB, not localStorage: tasks carry whole files and outgrow 5 MB. */
-const idbStorage: StateStorage = {
-  getItem: async (name) => (await get<string>(name)) ?? null,
-  setItem: (name, value) => set(name, value),
-  removeItem: (name) => del(name),
-}
 
 interface StudioState {
   projects: Record<string, TaskProject>

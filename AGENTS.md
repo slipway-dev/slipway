@@ -13,5 +13,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Read `docs/architecture.md` first; brand and copy rules are in `docs/brand/README.md`.
 - Facts about Harbor come from the `harbor` package source, pinned in `src/features/harbor/`. Do not guess Harbor behaviour; check the source (`pip download harbor==<version>`).
 - `features/harbor`, `features/parts` and `features/task` are framework-free and unit-tested; keep React out of them (except `task/store.ts`).
+- `features/runs` follows the same rule. The sample job comes from `scripts/sample-job/generate.py` (validated by Harbor's models); regenerate it rather than editing the fixture by hand.
 - Parts are JSON data, never code. New part capabilities go through `validateManifest`.
 - Before pushing: `pnpm test && pnpm typecheck && pnpm lint && pnpm build`.

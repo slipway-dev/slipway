@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "harbor/trial/trial.py", line 412, in _run_agent
+    await asyncio.wait_for(...)
+TimeoutError
+
+AgentTimeoutError: Agent execution timed out after 900.0 seconds
