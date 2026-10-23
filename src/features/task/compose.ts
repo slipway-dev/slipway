@@ -15,7 +15,9 @@ export type FileOrigin =
 
 export interface TaskFile {
   path: string
+  /** Text, or base64 when `encoding` is "base64". */
   content: string
+  encoding?: "base64"
   executable: boolean
   origin: FileOrigin
   /** Set when a hand edit replaced content Slipway would otherwise generate. */
@@ -228,6 +230,7 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
     files.set(path, {
       path,
       content: override.content,
+      encoding: override.encoding,
       executable: override.executable ?? existing?.executable ?? path.endsWith(".sh"),
       origin: { kind: "override" },
       replaces: existing?.origin,

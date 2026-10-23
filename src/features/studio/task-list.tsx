@@ -1,6 +1,6 @@
 "use client"
 
-import { FileUp, Plus, Trash2 } from "lucide-react"
+import { FileUp, FolderOpen, Plus, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useRef, useState } from "react"
@@ -15,10 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { importTaskZip } from "@/features/task/archive"
 import { taskTitle } from "@/features/task/model"
 import { STARTERS } from "@/features/task/starters"
 import { useHydrated, useStudio } from "@/features/task/store"
+import { describeSkipped, filesFromDrop, filesFromInput, type PathedFile } from "@/lib/local-files"
+import { cn } from "@/lib/utils"
+
+import { readTasks } from "./import-tasks"
 
 export function TaskList() {
   const hydrated = useHydrated()
@@ -28,38 +31,81 @@ export function TaskList() {
   const deleteProject = useStudio((s) => s.deleteProject)
   const router = useRouter()
   const fileInput = useRef<HTMLInputElement>(null)
+  const folderInput = useRef<HTMLInputElement>(null)
+  const [dragging, setDragging] = useState(false)
   const [open, setOpen] = useState(false)
 
   const sorted = Object.values(projects).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 
-  async function onImport(file: File) {
+  async function onImport(pending: Promise<PathedFile[]>) {
     try {
-      const project = importTaskZip(new Uint8Array(await file.arrayBuffer()))
-      router.push(`/studio/${addProject(project)}`)
+      const { projects, skipped } = await readTasks(await pending)
+      const note = describeSkipped(skipped)
+      if (note) toast.warning(note)
+      if (projects.length === 0) {
+        toast.error("No task could be imported.")
+        return
+      }
+      const ids = projects.map((project) => addProject(project))
+      if (ids.length === 1) router.push(`/studio/${ids[0]}`)
+      else toast.success(`Imported ${ids.length} tasks`)
     } catch (error) {
       toast.error((error as Error).message)
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div
+      className={cn("flex flex-col gap-6 rounded-lg", dragging && "outline-2 outline-offset-8 outline-signal outline-dashed")}
+      onDragOver={(e) => {
+        e.preventDefault()
+        setDragging(true)
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragging(false)
+        void onImport(filesFromDrop(e.dataTransfer))
+      }}
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-display font-bold">Your tasks</h1>
-          <p className="text-body-sm text-ink-muted">Saved in this browser.</p>
+          <p className="text-body-sm text-ink-muted">
+            Saved in this browser. Drop a task folder, a folder of tasks or a zip here to import it; files are
+            read locally and never uploaded.
+          </p>
         </div>
         <div className="flex gap-2">
+          <input
+            ref={folderInput}
+            type="file"
+            className="hidden"
+            // @ts-expect-error webkitdirectory is supported by every current browser but missing from React's types
+            webkitdirectory=""
+            multiple
+            onChange={(e) => {
+              const files = filesFromInput(e.target.files)
+              e.target.value = ""
+              if (files.length) void onImport(Promise.resolve(files))
+            }}
+          />
           <input
             ref={fileInput}
             type="file"
             accept=".zip,application/zip"
+            multiple
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) void onImport(file)
+              const files = filesFromInput(e.target.files)
               e.target.value = ""
+              if (files.length) void onImport(Promise.resolve(files))
             }}
           />
+          <Button variant="outline" onClick={() => folderInput.current?.click()}>
+            <FolderOpen />
+            Import folder
+          </Button>
           <Button variant="outline" onClick={() => fileInput.current?.click()}>
             <FileUp />
             Import .zip
@@ -103,7 +149,7 @@ export function TaskList() {
         <div className="flex flex-col items-start gap-2 rounded-lg border border-dashed border-line-strong p-8">
           <p className="font-semibold">No tasks yet</p>
           <p className="text-body-sm text-ink-muted">
-            Create one from a starter, or import a Harbor task folder you have zipped.
+            Create one from a starter, or import a Harbor task folder from your machine.
           </p>
         </div>
       ) : (

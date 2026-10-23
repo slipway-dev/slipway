@@ -17,9 +17,9 @@ Slipway is a community tool for Harbor. It is Harbor-compatible, not an official
 
 ## Status
 
-Early. Everything runs in your browser and is saved locally:
+Early. Everything runs in your browser and is saved locally; imported files are never uploaded, and the page's Content Security Policy makes sure of it.
 
-- **Studio** builds, checks and launches tasks.
+- **Studio** builds, checks and launches tasks, or imports the task folders you already have.
 - **Runs** imports a job folder from `harbor run` and lets you audit each trial's trajectory, with steps that can fake a reward flagged.
 
 Running evaluations from Slipway comes next — see [docs/architecture.md](docs/architecture.md).

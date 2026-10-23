@@ -1,16 +1,14 @@
-import Ajv, { type ErrorObject } from "ajv"
+import type { ErrorObject } from "ajv"
 
-import taskSchema from "./task-schema.json"
 import type { TaskConfig } from "./task-config"
+// Precompiled so validation needs no runtime code generation (CSP forbids eval).
+import validateFn from "./task-schema.validate.js"
 
 export interface SchemaError {
   /** Dotted path into task.toml, e.g. "environment.cpus". */
   path: string
   message: string
 }
-
-const ajv = new Ajv({ allErrors: true, strict: false })
-const validateFn = ajv.compile(taskSchema)
 
 function toPath(error: ErrorObject): string {
   const parts = error.instancePath.split("/").filter(Boolean)

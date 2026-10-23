@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "next typegen && tsc --noEmit",
-    "harbor:schema": "bash scripts/sync-harbor-schema.sh"
+    "harbor:schema": "bash scripts/sync-harbor-schema.sh && node scripts/build-validators.mjs"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
@@ -24,7 +24,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@lezer/highlight": "^1.2.5",
     "@uiw/react-codemirror": "^4.25.12",
-    "ajv": "^8.20.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fflate": "^0.8.3",
@@ -45,6 +44,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "ajv": "8.20.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",

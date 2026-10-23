@@ -38,7 +38,8 @@ export function FileView({ project, file, path, lookup, onSelect }: FileViewProp
   }
 
   const managed = MANAGED_PATHS.includes(path)
-  const editable = file.origin.kind === "override"
+  const binary = file.encoding === "base64"
+  const editable = file.origin.kind === "override" && !binary
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
@@ -61,7 +62,7 @@ export function FileView({ project, file, path, lookup, onSelect }: FileViewProp
             <Pencil />
             Edit in {path === "task.toml" ? "Task settings" : "Instruction"}
           </Button>
-        ) : editable ? (
+        ) : file.origin.kind === "override" ? (
           file.replaces ? (
             <Button variant="outline" size="sm" onClick={() => removeOverride(project.id, path)}>
               <RotateCcw />
@@ -97,17 +98,24 @@ export function FileView({ project, file, path, lookup, onSelect }: FileViewProp
           Editing by hand stops parts from updating this file until you revert it.
         </p>
       )}
-      <CodeEditor
-        key={path + String(editable)}
-        label={path}
-        value={file.content}
-        language={languageFor(path)}
-        readOnly={!editable}
-        className="min-h-0 flex-1"
-        onChange={(content) =>
-          setOverride(project.id, path, { content, executable: file.executable })
-        }
-      />
+      {binary ? (
+        <p className="rounded-md border border-line bg-surface p-4 text-body-sm">
+          Binary file, {Math.round((file.content.length * 3) / 4 / 1024)} KB. Slipway keeps it byte for byte and
+          writes it unchanged when you Launch; edit it with your own tools and import again.
+        </p>
+      ) : (
+        <CodeEditor
+          key={path + String(editable)}
+          label={path}
+          value={file.content}
+          language={languageFor(path)}
+          readOnly={!editable}
+          className="min-h-0 flex-1"
+          onChange={(content) =>
+            setOverride(project.id, path, { content, executable: file.executable })
+          }
+        />
+      )}
     </div>
   )
 }

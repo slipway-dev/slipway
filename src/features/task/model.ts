@@ -1,9 +1,11 @@
 import type { TaskConfig } from "@/features/harbor/task-config"
 import type { Block, SlotId } from "@/features/parts/types"
 
-/** A file the author wrote or edited by hand. It wins over generated content. */
+/** A file the author wrote, edited by hand or imported. It wins over generated content. */
 export interface FileOverride {
+  /** Text, or base64 when `encoding` is "base64" (imported binary files). */
   content: string
+  encoding?: "base64"
   executable?: boolean
 }
 

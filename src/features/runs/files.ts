@@ -1,4 +1,4 @@
-import { unzipSync } from "fflate"
+import { ImportBudget, unzipWithin, type ImportLimits, type Skipped } from "@/lib/safe-files"
 
 /**
  * A set of files from a Harbor jobs folder, keyed by forward-slash path.
@@ -6,41 +6,37 @@ import { unzipSync } from "fflate"
  */
 export type FileSet = Map<string, Blob>
 
-/** Files larger than this are skipped on import (artifacts, core dumps). */
-export const MAX_FILE_BYTES = 25 * 1024 * 1024
-
-const IGNORED = /(^|\/)(__MACOSX|\.DS_Store|\._[^/]*)(\/|$)/
+/** Jobs carry logs and trajectories, not artifacts; big files are usually core dumps or images. */
+export const JOB_LIMITS: ImportLimits = {
+  maxFileBytes: 25 * 1024 * 1024,
+  maxTotalBytes: 500 * 1024 * 1024,
+  maxFiles: 50_000,
+}
 
 export interface ImportReport {
   files: FileSet
-  skipped: string[]
+  skipped: Skipped[]
 }
 
-function accept(path: string, size: number, report: ImportReport, blob: () => Blob) {
-  if (!path || path.endsWith("/") || IGNORED.test(path)) return
-  if (size > MAX_FILE_BYTES) {
-    report.skipped.push(path)
-    return
+export function filesFromZip(data: Uint8Array, budget = new ImportBudget(JOB_LIMITS)): ImportReport {
+  const files: FileSet = new Map()
+  for (const [path, bytes] of unzipWithin(data, budget, JOB_LIMITS)) {
+    files.set(path, new Blob([bytes as BlobPart]))
   }
-  report.files.set(path, blob())
-}
-
-export function filesFromZip(data: Uint8Array): ImportReport {
-  const report: ImportReport = { files: new Map(), skipped: [] }
-  const entries = unzipSync(data)
-  for (const [path, bytes] of Object.entries(entries)) {
-    accept(path, bytes.byteLength, report, () => new Blob([bytes as BlobPart]))
-  }
-  return report
+  return { files, skipped: budget.skipped }
 }
 
 /** From <input webkitdirectory> or a dropped folder; paths start at the chosen folder. */
-export function filesFromList(files: Iterable<[path: string, file: File]>): ImportReport {
-  const report: ImportReport = { files: new Map(), skipped: [] }
-  for (const [path, file] of files) {
-    accept(path.replace(/\\/g, "/"), file.size, report, () => file)
+export function filesFromList(
+  files: Iterable<[path: string, file: File]>,
+  budget = new ImportBudget(JOB_LIMITS),
+): ImportReport {
+  const out: FileSet = new Map()
+  for (const [raw, file] of files) {
+    const path = budget.admit(raw, file.size)
+    if (path) out.set(path, file)
   }
-  return report
+  return { files: out, skipped: budget.skipped }
 }
 
 export async function readText(files: FileSet, path: string): Promise<string | undefined> {

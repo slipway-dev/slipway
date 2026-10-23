@@ -146,7 +146,7 @@ describe("archive", () => {
     const composed = composeTask(project, lookup)
     const zip = buildTaskZip(taskDirName(project), composed.files)
 
-    const imported = importTaskZip(zip)
+    const [imported] = importTaskZip(zip).projects
     const recomposed = composeTask(imported, lookup)
     const contents = (c: typeof composed) =>
       Object.fromEntries(c.files.map((f) => [f.path, [f.content, f.executable]]))
@@ -168,5 +168,54 @@ describe("cleared params", () => {
     const { config } = composeTask(project, lookup)
     expect(config.environment).not.toHaveProperty("cpus")
     expect(config.environment?.memory_mb).toBe(2048)
+  })
+})
+
+describe("importing tasks", () => {
+  it("imports every task in a folder of tasks", async () => {
+    const { strToU8, zipSync } = await import("fflate")
+    const zip = zipSync({
+      "dataset/one/task.toml": strToU8('[task]\nname = "org/one"\n'),
+      "dataset/one/instruction.md": strToU8("First."),
+      "dataset/two/task.toml": strToU8('[task]\nname = "org/two"\n'),
+      "dataset/two/tests/test.sh": strToU8("#!/bin/bash\n"),
+      "dataset/README.md": strToU8("not part of a task"),
+    })
+    const { projects, skipped } = importTaskZip(zip)
+    expect(projects.map((p) => p.config.task?.name)).toEqual(["org/one", "org/two"])
+    expect(projects[0].instruction).toBe("First.")
+    expect(Object.keys(projects[1].overrides)).toEqual(["tests/test.sh"])
+    expect(skipped).toEqual([])
+  })
+
+  it("keeps binary files byte for byte through Launch", async () => {
+    const { strToU8, unzipSync, zipSync } = await import("fflate")
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 255, 254])
+    const { projects } = importTaskZip(
+      zipSync({ "t/task.toml": strToU8('[task]\nname = "org/t"\n'), "t/environment/logo.png": png }),
+    )
+    expect(projects[0].overrides["environment/logo.png"].encoding).toBe("base64")
+    const composed = composeTask(projects[0], lookup)
+    const out = unzipSync(buildTaskZip("t", composed.files))
+    expect(out["t/environment/logo.png"]).toEqual(png)
+  })
+
+  it("skips a task whose task.toml does not parse, and keeps the others", async () => {
+    const { strToU8, zipSync } = await import("fflate")
+    const { projects, skipped } = importTaskZip(
+      zipSync({ "a/task.toml": strToU8("[task\nname ="), "b/task.toml": strToU8('[task]\nname = "org/b"\n') }),
+    )
+    expect(projects.map((p) => p.config.task?.name)).toEqual(["org/b"])
+    expect(skipped[0].path).toBe("a/")
+    expect(skipped[0].reason).toMatch(/not imported/)
+  })
+})
+
+describe("precompiled validator", () => {
+  it("matches task-schema.json (run pnpm harbor:schema after changing it)", async () => {
+    const { readFileSync } = await import("node:fs")
+    const { buildTaskValidator } = await import("../../../../scripts/build-validators.mjs")
+    const committed = readFileSync(new URL("../../harbor/task-schema.validate.js", import.meta.url), "utf8")
+    expect(committed).toBe(buildTaskValidator())
   })
 })

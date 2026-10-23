@@ -5,45 +5,22 @@ import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { filesFromList, filesFromZip, type ImportReport } from "@/features/runs/files"
+import { filesFromList, filesFromZip, JOB_LIMITS, type ImportReport } from "@/features/runs/files"
 import { importJobs } from "@/features/runs/store"
+import { describeSkipped, filesFromDrop, filesFromInput, isZip, type PathedFile } from "@/lib/local-files"
+import { ImportBudget } from "@/lib/safe-files"
 import { cn } from "@/lib/utils"
 
-type PathedFile = [path: string, file: File]
-
-/** Walk a dropped folder; File objects from entries carry no relative path, so track it here. */
-async function readEntry(entry: FileSystemEntry, prefix: string, out: PathedFile[]): Promise<void> {
-  const path = prefix ? `${prefix}/${entry.name}` : entry.name
-  if (entry.isFile) {
-    out.push([path, await new Promise<File>((resolve, reject) => (entry as FileSystemFileEntry).file(resolve, reject))])
-    return
-  }
-  const reader = (entry as FileSystemDirectoryEntry).createReader()
-  // readEntries returns at most ~100 entries per call.
-  for (;;) {
-    const batch = await new Promise<FileSystemEntry[]>((resolve, reject) => reader.readEntries(resolve, reject))
-    if (batch.length === 0) break
-    await Promise.all(batch.map((child) => readEntry(child, path, out)))
-  }
-}
-
-function fromInput(files: FileList | null): PathedFile[] {
-  return [...(files ?? [])].map((file) => [file.webkitRelativePath || file.name, file])
-}
-
 async function reportFrom(files: PathedFile[]): Promise<ImportReport> {
-  const merged: ImportReport = { files: new Map(), skipped: [] }
-  const loose: PathedFile[] = []
-  for (const [path, file] of files) {
-    if (file.name.toLowerCase().endsWith(".zip")) {
-      const report = filesFromZip(new Uint8Array(await file.arrayBuffer()))
-      report.files.forEach((blob, path) => merged.files.set(path, blob))
-      merged.skipped.push(...report.skipped)
-    } else loose.push([path, file])
+  // One budget for the whole drop, so several zips cannot add up past the limits.
+  const budget = new ImportBudget(JOB_LIMITS)
+  const merged: ImportReport = { files: new Map(), skipped: budget.skipped }
+  for (const [, file] of files.filter(([, f]) => isZip(f))) {
+    filesFromZip(new Uint8Array(await file.arrayBuffer()), budget).files.forEach((blob, path) =>
+      merged.files.set(path, blob),
+    )
   }
-  const report = filesFromList(loose)
-  report.files.forEach((blob, path) => merged.files.set(path, blob))
-  merged.skipped.push(...report.skipped)
+  filesFromList(files.filter(([, f]) => !isZip(f)), budget).files.forEach((blob, path) => merged.files.set(path, blob))
   return merged
 }
 
@@ -62,9 +39,8 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         toast.error("No Harbor job found. Choose a job folder from jobs/, a zip of one, or a trajectory.json.")
         return
       }
-      if (report.skipped.length) {
-        toast.warning(`Skipped ${report.skipped.length} files over 25 MB.`)
-      }
+      const skipped = describeSkipped(report.skipped)
+      if (skipped) toast.warning(skipped)
       toast.success(ids.length === 1 ? "Imported 1 job" : `Imported ${ids.length} jobs`)
       onImported(ids)
     } catch (error) {
@@ -84,14 +60,8 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
       onDrop={(e) => {
         e.preventDefault()
         setDragging(false)
-        const entries = [...e.dataTransfer.items]
-          .map((item) => item.webkitGetAsEntry?.())
-          .filter((entry): entry is FileSystemEntry => Boolean(entry))
-        void run(async () => {
-          const files: PathedFile[] = []
-          await Promise.all(entries.map((entry) => readEntry(entry, "", files)))
-          return reportFrom(files)
-        })
+        const pending = filesFromDrop(e.dataTransfer)
+        void run(async () => reportFrom(await pending))
       }}
       className={cn(
         "flex flex-col gap-4 rounded-lg border border-dashed border-line-strong bg-surface p-6",
@@ -102,7 +72,7 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         <p className="font-semibold">Drop a Harbor job here</p>
         <p className="text-body-sm text-ink-muted">
           A job folder from <code>jobs/</code>, the whole <code>jobs/</code> folder, a zip of either, or a single{" "}
-          <code>trajectory.json</code>. Files stay in this browser.
+          <code>trajectory.json</code>. Files are read in this browser and never uploaded.
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -114,7 +84,7 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
           webkitdirectory=""
           multiple
           onChange={(e) => {
-            const files = fromInput(e.target.files)
+            const files = filesFromInput(e.target.files)
             e.target.value = ""
             if (files.length) void run(() => reportFrom(files))
           }}
@@ -126,7 +96,7 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
           multiple
           className="hidden"
           onChange={(e) => {
-            const files = fromInput(e.target.files)
+            const files = filesFromInput(e.target.files)
             e.target.value = ""
             if (files.length) void run(() => reportFrom(files))
           }}
