@@ -1,0 +1,67 @@
+{
+  "id": "4d066c2c-d33e-5e90-8343-496ac58cda73",
+  "task_name": "my-org/csv-stats",
+  "trial_name": "csv-stats__a1B2c3D",
+  "trial_uri": "file:///jobs/2026-10-20__14-02-11/csv-stats__a1B2c3D",
+  "task_id": {
+    "path": "csv-stats"
+  },
+  "source": null,
+  "task_checksum": "9b0f6c1e4d2a8b7c3e5f1a0d9c8b7a6e5f4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b",
+  "config": {
+    "task": {
+      "path": "csv-stats"
+    },
+    "trial_name": "csv-stats__a1B2c3D",
+    "trials_dir": "/jobs/2026-10-20__14-02-11",
+    "agent": {
+      "name": "claude-code",
+      "model_name": "anthropic/claude-sonnet-5-5"
+    },
+    "environment": {
+      "type": "docker"
+    },
+    "verifier": {},
+    "job_id": "6f1c2a8e-3b7d-4e59-9a40-1d2e3f4a5b6c"
+  },
+  "agent_info": {
+    "name": "claude-code",
+    "version": "2.4.1",
+    "model_info": {
+      "name": "claude-sonnet-5-5",
+      "provider": "anthropic"
+    }
+  },
+  "agent_result": {
+    "n_input_tokens": 22973,
+    "n_cache_tokens": 0,
+    "n_output_tokens": 392,
+    "cost_usd": 0.0748
+  },
+  "verifier_result": {
+    "rewards": {
+      "reward": 1.0
+    }
+  },
+  "verifier_environment_mode": "shared",
+  "exception_info": null,
+  "started_at": "2026-10-20T14:02:23Z",
+  "finished_at": "2026-10-20T14:03:33Z",
+  "environment_setup": {
+    "started_at": "2026-10-20T14:02:23Z",
+    "finished_at": "2026-10-20T14:02:41Z"
+  },
+  "agent_setup": {
+    "started_at": "2026-10-20T14:02:41Z",
+    "finished_at": "2026-10-20T14:02:43Z"
+  },
+  "agent_execution": {
+    "started_at": "2026-10-20T14:02:43Z",
+    "finished_at": "2026-10-20T14:03:27Z"
+  },
+  "verifier": {
+    "started_at": "2026-10-20T14:03:28Z",
+    "finished_at": "2026-10-20T14:03:32Z"
+  },
+  "step_results": null
+}

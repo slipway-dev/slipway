@@ -1,0 +1,8 @@
+{
+  "jobs_dir": "jobs",
+  "tasks": [
+    {
+      "path": "csv-stats"
+    }
+  ]
+}

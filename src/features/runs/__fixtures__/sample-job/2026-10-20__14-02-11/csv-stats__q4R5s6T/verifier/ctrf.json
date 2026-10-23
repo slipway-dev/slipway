@@ -1,0 +1,31 @@
+{
+  "results": {
+    "tool": {
+      "name": "pytest"
+    },
+    "summary": {
+      "tests": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "pending": 0,
+      "other": 0,
+      "start": 0,
+      "stop": 1
+    },
+    "tests": [
+      {
+        "name": "test_answer_file_exists",
+        "status": "failed",
+        "duration": 3,
+        "message": "AssertionError: /app/answer.txt not found"
+      },
+      {
+        "name": "test_answer_value",
+        "status": "failed",
+        "duration": 3,
+        "message": "AssertionError: /app/answer.txt not found"
+      }
+    ]
+  }
+}

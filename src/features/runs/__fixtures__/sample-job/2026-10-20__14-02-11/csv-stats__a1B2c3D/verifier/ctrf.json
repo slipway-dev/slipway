@@ -1,0 +1,29 @@
+{
+  "results": {
+    "tool": {
+      "name": "pytest"
+    },
+    "summary": {
+      "tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "pending": 0,
+      "other": 0,
+      "start": 0,
+      "stop": 1
+    },
+    "tests": [
+      {
+        "name": "test_answer_file_exists",
+        "status": "passed",
+        "duration": 3
+      },
+      {
+        "name": "test_answer_value",
+        "status": "passed",
+        "duration": 3
+      }
+    ]
+  }
+}
