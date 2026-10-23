@@ -1,10 +1,9 @@
-import type { Metadata } from "next"
 
 import { ClientOnly } from "@/components/client-only"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteNav } from "@/components/site-nav"
 import { RunsHome } from "@/features/audit/runs-home"
 
-export const metadata: Metadata = { title: "Runs" }
 
 export default function RunsPage() {
   return (
@@ -15,6 +14,7 @@ export default function RunsPage() {
           <RunsHome />
         </ClientOnly>
       </main>
+      <SiteFooter />
     </div>
   )
 }

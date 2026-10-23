@@ -1,12 +1,11 @@
-import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { ClientOnly } from "@/components/client-only"
+import { SiteFooter } from "@/components/site-footer"
 import { SiteNav } from "@/components/site-nav"
 import { LoadingNote } from "@/features/audit/loading-note"
 import { TrialView } from "@/features/audit/trial-view"
 
-export const metadata: Metadata = { title: "Trial" }
 
 const loading = <LoadingNote what="trial" />
 
@@ -23,6 +22,7 @@ export default function TrialPage({ params }: PageProps<"/runs/[jobId]/[trial]">
           ))}
         </Suspense>
       </main>
+      <SiteFooter />
     </div>
   )
 }

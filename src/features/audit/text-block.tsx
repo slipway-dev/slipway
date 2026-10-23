@@ -29,7 +29,7 @@ export function TextBlock({ text, maxLines = 14, mono = false, code = false, cla
         className={cn(
           "w-full overflow-x-auto break-words whitespace-pre-wrap",
           mono || code ? "font-mono text-code" : "font-sans text-body",
-          code && "rounded-md bg-hull p-3 text-hull-ink",
+          code && "rounded-xl bg-hull p-4 text-hull-ink",
         )}
       >
         {shown}

@@ -30,6 +30,7 @@ import { GeneratedFiles } from "./generated-files"
 import { SettingsForm } from "./settings-form"
 import { SECTIONS, sectionText, type Selection } from "./slots"
 import { TaskTree } from "./task-tree"
+import { NewFileDialog } from "./new-file-dialog"
 
 type MobileTab = "files" | "edit" | "checks"
 
@@ -49,12 +50,12 @@ function Split({ wide, editor, output }: { wide: boolean; editor: React.ReactNod
     <ResizablePanelGroup orientation="horizontal" className="min-h-0">
       <ResizablePanel defaultSize="50" minSize={360}>
         <ScrollArea className="h-full">
-          <div className="p-6">{editor}</div>
+          <div className="p-8">{editor}</div>
         </ScrollArea>
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel defaultSize="50" minSize={320}>
-        <div className="h-full p-3">{output}</div>
+        <div className="h-full p-4">{output}</div>
       </ResizablePanel>
     </ResizablePanelGroup>
   )
@@ -65,7 +66,7 @@ function SectionHeader({ section }: { section: keyof typeof SECTIONS }) {
   const { label, hint } = sectionText(t, section)
   const Icon = SECTIONS[section].icon
   return (
-    <div className="mb-6 flex flex-col gap-1">
+    <div className="mb-8 flex flex-col gap-1.5">
       <h2 className="flex items-baseline gap-2 text-title font-semibold">
         <Icon className="size-5 shrink-0 translate-y-0.5 self-start text-ink-muted" aria-hidden />
         {label}
@@ -97,7 +98,7 @@ function Canvas({
 
   if (selection.kind === "file") {
     return (
-      <div className="h-full p-4 lg:p-6">
+      <div className="h-full p-4 lg:p-8">
         <FileView
           project={project}
           path={selection.path}
@@ -111,7 +112,7 @@ function Canvas({
 
   if (selection.kind === "instruction") {
     return (
-      <div className="flex h-full min-h-0 flex-col p-4 lg:p-6">
+      <div className="flex h-full min-h-0 flex-col p-4 lg:p-8">
         <SectionHeader section="instruction" />
         <CodeEditor
           label="instruction.md"
@@ -164,6 +165,7 @@ export function Studio({ id }: { id: string }) {
   const lookup = usePartLookup()
   const [selection, setSelection] = useState<Selection>({ kind: "instruction" })
   const [mobileTab, setMobileTab] = useState<MobileTab>("edit")
+  const [newFileOpen, setNewFileOpen] = useState(false)
   const wide = useMediaQuery("(min-width: 1024px)")
 
   const composed = useMemo(() => (project ? composeTask(project, lookup) : undefined), [project, lookup])
@@ -205,10 +207,7 @@ export function Studio({ id }: { id: string }) {
     else if (issue.path) select({ kind: "file", path: issue.path })
   }
 
-  function addFile() {
-    const path = prompt(t.studio.tree.newFilePrompt, "environment/")
-    const clean = path?.trim().replace(/^\/+/, "")
-    if (!clean || clean.endsWith("/") || clean.split("/").includes("..")) return
+  function addFile(clean: string) {
     if (!composed!.files.some((f) => f.path === clean)) {
       setOverride(project!.id, clean, { content: "", executable: clean.endsWith(".sh") })
     }
@@ -231,7 +230,7 @@ export function Studio({ id }: { id: string }) {
       issues={issues}
       selection={selection}
       onSelect={select}
-      onAddFile={addFile}
+      onAddFile={() => setNewFileOpen(true)}
     />
   )
   const canvas = (
@@ -249,7 +248,8 @@ export function Studio({ id }: { id: string }) {
 
   return (
     <div className="flex h-dvh flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-paper px-3 lg:px-4">
+      <NewFileDialog open={newFileOpen} onOpenChange={setNewFileOpen} onCreate={addFile} />
+      <header className="flex h-16 shrink-0 items-center gap-4 border-b border-line bg-paper px-4 lg:px-5">
         <Link
           href="/studio"
           className="flex items-center gap-1.5 rounded-sm p-1 text-ink-muted hover:text-ink"
@@ -273,7 +273,7 @@ export function Studio({ id }: { id: string }) {
           </span>
         </span>
         <LocaleSwitch />
-        <Button onClick={launch}>
+        <Button variant="signal" onClick={launch}>
           <Rocket />
           {t.studio.launch}
         </Button>

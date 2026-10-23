@@ -28,7 +28,7 @@ function ImagePart({ path, resolve }: { path: string; resolve: (path: string) =>
   }
   if (!url) return <p className="text-body-sm text-ink-muted">{t.imageMissing(path)}</p>
   // eslint-disable-next-line @next/next/no-img-element -- local object URL, not an optimizable asset
-  return <img src={url} alt={t.imageAlt(path)} className="max-h-96 rounded-md border border-line" />
+  return <img src={url} alt={t.imageAlt(path)} className="max-h-96 rounded-xl border border-line" />
 }
 
 function ContentView({
@@ -75,7 +75,7 @@ function ToolCallView({
   const t = useT().runs.trajectory
 
   return (
-    <div className={cn("flex flex-col gap-2 rounded-md border border-line p-3", flagged.length && "border-line-strong")}>
+    <div className={cn("flex flex-col gap-2 rounded-xl border border-line p-4", flagged.length && "border-line-strong")}>
       <div className="flex flex-wrap items-center gap-2">
         <code className="font-mono text-code font-semibold">{call.function_name}</code>
         {flagged.map((f) => (
@@ -106,7 +106,7 @@ function ToolCallView({
       )}
       {results.map((result, i) => (
         <div key={i} className="flex flex-col gap-1">
-          <span className="text-label uppercase text-ink-muted">{t.result}</span>
+          <span className="text-label font-medium text-ink-muted">{t.result}</span>
           <ContentView content={result.content} resolve={resolve} code />
           {result.subagent_trajectory_ref?.map((ref) =>
             ref.trajectory_id ? (
@@ -164,7 +164,7 @@ export function StepCard({
       id={anchorId}
       aria-labelledby={`${anchorId}-title`}
       className={cn(
-        "flex scroll-mt-4 flex-col gap-3 rounded-md border bg-surface p-4 [content-visibility:auto] [contain-intrinsic-size:auto_320px]",
+        "flex scroll-mt-4 flex-col gap-3 rounded-xl border bg-surface p-5 [content-visibility:auto] [contain-intrinsic-size:auto_320px]",
         findings.some((f) => f.severity === "error") ? "border-fail" : "border-line",
       )}
     >
@@ -172,7 +172,7 @@ export function StepCard({
         <h3 id={`${anchorId}-title`} className="font-mono text-code font-semibold">
           #{step.step_id}
         </h3>
-        <Badge variant={step.source === "agent" ? "secondary" : "outline"} className="text-label uppercase">
+        <Badge variant={step.source === "agent" ? "secondary" : "outline"} className="text-label">
           {t.sources[step.source] ?? step.source}
         </Badge>
         {step.is_copied_context && <Badge variant="outline">{t.copiedContext}</Badge>}
@@ -189,7 +189,7 @@ export function StepCard({
       </header>
 
       {findings.length > 0 && (
-        <ul className="flex flex-col gap-1 rounded-md bg-surface-sunken p-3 text-body-sm">
+        <ul className="flex flex-col gap-1 rounded-xl bg-surface-sunken p-4 text-body-sm">
           {[...stepFindings, ...callFindings].map((f, i) => (
             <li key={`${f.rule}-${i}`} className="flex flex-col gap-0.5">
               <span>
@@ -204,7 +204,7 @@ export function StepCard({
       <ContentView content={step.message} resolve={resolve} />
 
       {step.reasoning_content && (
-        <details className="rounded-md bg-surface-sunken p-3">
+        <details className="rounded-xl bg-surface-sunken p-4">
           <summary className="cursor-pointer text-body-sm font-semibold text-ink-muted">{t.reasoning}</summary>
           <TextBlock text={step.reasoning_content} className="mt-2 text-ink-muted" />
         </details>
@@ -223,7 +223,7 @@ export function StepCard({
 
       {unpaired.map((result, i) => (
         <div key={i} className="flex flex-col gap-1">
-          <span className="text-label uppercase text-ink-muted">
+          <span className="text-label font-medium text-ink-muted">
             {pairs.length > 1 ? t.outputShared : t.output}
           </span>
           <ContentView content={result.content} resolve={resolve} code />

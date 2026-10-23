@@ -36,8 +36,9 @@ Binding, from `docs/brand/README.md` and `docs/brand/tokens.json`:
 - Name is always "Slipway". Product layer words: Studio, Launch, Yard. Launch is the only primary verb.
 - Harbor terms stay untranslated in both languages: task, dataset, `task.toml`, `instruction.md`, environment, verifier, solution, `oracle`, `nop`, trial, job.
 - Community tool: "for Harbor" / "Harbor-compatible", never official.
-- Voice: engineer to engineer, sentence case, no emoji, no exclamation marks, no marketing adjectives. Chinese tagline: 可视化地造 Harbor task，一键下水。
-- Tokens (paper, surface, hull, ink, signal, tide, pass/fail/warn), Schibsted Grotesk + JetBrains Mono (Noto Sans SC fallback), 32.7° slipway angle, one `signal` filled button per view, layering by borders not shadows, status always shape + text, `nop` = 0 shown as tide "expected 0".
+- Voice: engineer to engineer, sentence case, no emoji, no exclamation marks, no marketing adjectives. Chinese tagline: 可视化构建 Harbor task，随处运行。
+- Visual direction set by the owner: modern black, white and grey (near-white `paper` oklch(99.5% 0 0), no sand or paper tints), generous spacing and larger radii, one vivid `signal` orange used rarely but boldly (one filled signal button per view). Geist + Geist Mono, Chinese on PingFang SC / Microsoft YaHei. Status always shape + text; `nop` = 0 shown as "expected 0".
+- Every page title is "Slipway Studio" in both languages. The footer credits "Created by Yiming Shen" and links the GitHub repository.
 
 ## Evidence on Hand
 

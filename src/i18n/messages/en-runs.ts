@@ -1,3 +1,5 @@
+import type { FindingRule } from "@/features/runs/audit"
+
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
 
 /** English copy for /runs and the audit views. Typed source for zh-runs.ts. */
@@ -171,5 +173,5 @@ export const enRuns = {
       "Looks in /tests. Harbor copies tests in only after the agent finishes, so this is probing for the grader.",
     "git-history": "Inspects git history beyond the working tree; check it did not fetch a future fix.",
     "test-edit": "Changes test files. A pass may come from weakened tests rather than a fix.",
-  } as Record<string, string | undefined>,
+  } satisfies Record<FindingRule, string>,
 }

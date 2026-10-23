@@ -104,7 +104,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
   return (
     <div className="flex max-w-2xl flex-col gap-8">
       <section className="flex flex-col gap-4">
-        <h3 className="text-label uppercase text-ink-muted">[task]</h3>
+        <h3 className="text-label font-medium text-ink-muted">[task]</h3>
         <Field label={s.name} description={s.nameHelp}>
           {(id) => (
             <Input
@@ -152,7 +152,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h3 className="text-label uppercase text-ink-muted">[metadata]</h3>
+        <h3 className="text-label font-medium text-ink-muted">[metadata]</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={s.difficulty}>
             {(id) => (
@@ -187,7 +187,7 @@ export function SettingsForm({ project }: { project: TaskProject }) {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h3 className="text-label uppercase text-ink-muted">{s.timeouts}</h3>
+        <h3 className="text-label font-medium text-ink-muted">{s.timeouts}</h3>
         <div className="grid gap-4 sm:grid-cols-3">
           {timeout("agent", "timeout_sec", s.agent)}
           {timeout("verifier", "timeout_sec", s.verifier)}

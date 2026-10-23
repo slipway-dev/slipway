@@ -3,6 +3,7 @@
 import { Pencil, RotateCcw, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import type { PartLookup } from "@/features/parts/registry"
 import { MANAGED_PATHS, type FileOrigin, type TaskFile } from "@/features/task/compose"
 import type { TaskProject } from "@/features/task/model"
@@ -77,16 +78,19 @@ export function FileView({ project, file, path, lookup, onSelect }: FileViewProp
               {f.revert}
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (confirm(f.confirmDelete(path))) removeOverride(project.id, path)
-              }}
+            <ConfirmDialog
+              title={f.confirmDelete(path)}
+              confirmLabel={t.common.delete}
+              onConfirm={() => removeOverride(project.id, path)}
             >
-              <Trash2 />
-              {f.deleteFile}
-            </Button>
+              <Button
+                variant="outline"
+                size="sm"
+              >
+                <Trash2 />
+                {f.deleteFile}
+              </Button>
+            </ConfirmDialog>
           )
         ) : (
           <Button

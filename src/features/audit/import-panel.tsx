@@ -7,9 +7,10 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { filesFromList, filesFromZip, JOB_LIMITS, type ImportReport } from "@/features/runs/files"
 import { importJobs } from "@/features/runs/store"
-import { describeSkipped, filesFromDrop, filesFromInput, isZip, type PathedFile } from "@/lib/local-files"
+import { filesFromDrop, filesFromInput, isZip, type PathedFile } from "@/lib/local-files"
 import { ImportBudget } from "@/lib/safe-files"
 import { useT } from "@/i18n/provider"
+import { skippedText } from "@/i18n/text"
 import { cn } from "@/lib/utils"
 
 async function reportFrom(files: PathedFile[]): Promise<ImportReport> {
@@ -26,7 +27,8 @@ async function reportFrom(files: PathedFile[]): Promise<ImportReport> {
 }
 
 export function ImportPanel({ onImported }: { onImported: (ids: string[]) => void }) {
-  const t = useT().runs.import
+  const messages = useT()
+  const t = messages.runs.import
   const folderInput = useRef<HTMLInputElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
@@ -41,7 +43,7 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         toast.error(t.noJob)
         return
       }
-      const skipped = describeSkipped(report.skipped)
+      const skipped = skippedText(messages, report.skipped)
       if (skipped) toast.warning(skipped)
       toast.success(t.imported(ids.length))
       onImported(ids)
@@ -66,7 +68,7 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         void run(async () => reportFrom(await pending))
       }}
       className={cn(
-        "grid gap-x-8 gap-y-4 rounded-lg border border-dashed border-line-strong bg-surface p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]",
+        "grid gap-x-8 gap-y-4 rounded-2xl border border-dashed border-line-strong bg-surface p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]",
         dragging && "border-solid border-tide bg-surface-sunken",
       )}
     >
@@ -124,11 +126,11 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         </Button>
       </div>
       <figure className="flex min-w-0 flex-col gap-1.5 md:col-start-2 md:row-span-2 md:row-start-1">
-        <figcaption className="flex items-center gap-1.5 text-label uppercase text-ink-muted">
+        <figcaption className="flex items-center gap-1.5 text-label font-medium text-ink-muted">
           <Terminal className="size-3.5" aria-hidden />
           {t.zipHint}
         </figcaption>
-        <pre className="rounded-md bg-hull px-3 py-2.5 text-code break-all whitespace-pre-wrap text-hull-ink">
+        <pre className="rounded-xl bg-hull px-3 py-2.5 text-code break-all whitespace-pre-wrap text-hull-ink">
           {"cd jobs && zip -r ../my-job.zip 2026-10-20__14-02-11"}
         </pre>
       </figure>

@@ -70,12 +70,12 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
       id={`block-${block.id}`}
       style={{ transform: CSS.Translate.toString(transform), transition }}
       className={cn(
-        "rounded-md border border-line-strong bg-surface",
+        "rounded-xl border border-line bg-surface",
         isDragging && "relative z-10 shadow-drag",
         block.disabled && "opacity-60",
       )}
     >
-      <div className="flex items-center gap-2 p-3">
+      <div className="flex items-center gap-2.5 px-4 py-3">
         <button
           type="button"
           className="cursor-grab touch-none rounded-sm text-ink-muted"
@@ -95,7 +95,7 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
         >
           <span className="truncate font-semibold">{name}</span>
           {part?.role && (
-            <Badge variant="secondary" className="text-label uppercase">
+            <Badge variant="secondary" className="text-label">
               {part.role}
             </Badge>
           )}
@@ -120,7 +120,7 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
       </div>
 
       {issues.length > 0 && (
-        <ul className="flex flex-col gap-1 px-3 pb-3 text-body-sm">
+        <ul className="flex flex-col gap-1 px-4 pb-3 text-body-sm">
           {issues.map((issue) => (
             <li
               key={issue.code + issue.message}
@@ -138,7 +138,7 @@ function BlockCard({ projectId, slot, block, lookup, issues }: BlockCardProps) {
       )}
 
       {expanded && part && (
-        <div id={bodyId} className="flex flex-col gap-4 border-t border-line p-4">
+        <div id={bodyId} className="flex flex-col gap-5 border-t border-line p-5">
           <p className="text-body-sm text-ink-muted">{partText(t, part).summary}</p>
           {part.params.map((spec) => (
             <ParamField
@@ -183,15 +183,15 @@ export function BlockList({ project, slot, lookup, issues }: BlockListProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {blocks.length === 0 ? (
-        <p className="rounded-md border border-dashed border-line-strong p-6 text-body-sm text-ink-muted">
+        <p className="rounded-xl border border-dashed border-line-strong p-8 text-body-sm text-ink-muted">
           {t.studio.blocks.empty} {sectionText(t, slot).hint}
         </p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-4">
               {blocks.map((block) => (
                 <BlockCard
                   key={block.id}

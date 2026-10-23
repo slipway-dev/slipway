@@ -18,7 +18,7 @@ type Filter = "all" | "flagged" | "flagged-pass" | "failed"
 export function Figure({ label, value, detail }: { label: string; value: React.ReactNode; detail?: React.ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      <dt className="text-label uppercase text-ink-muted">{label}</dt>
+      <dt className="text-label font-medium text-ink-muted">{label}</dt>
       <dd className="flex flex-wrap items-baseline gap-x-2">
         <span className="font-semibold tabular-nums">{value}</span>
         {detail && <span className="text-body-sm text-ink-muted tabular-nums">{detail}</span>}
@@ -90,7 +90,7 @@ export function JobView({ id }: { id: string }) {
       </dl>
 
       {flaggedPasses.length > 0 && (
-        <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-hull px-4 py-3 text-hull-ink">
+        <div role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-hull px-4 py-3 text-hull-ink">
           <span className="flex size-5 shrink-0 items-center justify-center rounded-sm bg-fail text-white">
             <X className="size-3.5" strokeWidth={2.5} aria-hidden />
           </span>
@@ -108,7 +108,7 @@ export function JobView({ id }: { id: string }) {
 
       <section className="flex flex-col gap-3" aria-labelledby="trials-heading">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="trials-heading" className="text-label uppercase text-ink-muted">
+          <h2 id="trials-heading" className="text-label font-medium text-ink-muted">
             {t.job.trials}
           </h2>
           <Select value={filter} onValueChange={(v) => setFilter(v as Filter)}>
@@ -124,17 +124,17 @@ export function JobView({ id }: { id: string }) {
             </SelectContent>
           </Select>
         </div>
-        <div className="overflow-x-auto rounded-md border border-line bg-surface">
+        <div className="overflow-x-auto rounded-xl border border-line bg-surface">
           <table className="w-full min-w-[720px] text-left text-body-sm">
-            <thead className="border-b border-line bg-surface-sunken text-label uppercase text-ink-muted">
+            <thead className="border-b border-line bg-surface-sunken text-label font-medium text-ink-muted">
               <tr>
-                <th className="px-3 py-2 font-semibold">{t.job.columns.trial}</th>
-                <th className="px-3 py-2 font-semibold">{t.job.columns.agent}</th>
-                <th className="px-3 py-2 text-right font-semibold">{t.job.columns.reward}</th>
-                <th className="px-3 py-2 font-semibold">{t.job.columns.status}</th>
-                <th className="px-3 py-2 font-semibold">{t.job.columns.audit}</th>
-                <th className="px-3 py-2 text-right font-semibold">{t.job.columns.time}</th>
-                <th className="px-3 py-2 text-right font-semibold">{t.job.columns.cost}</th>
+                <th className="px-3 py-3 font-semibold">{t.job.columns.trial}</th>
+                <th className="px-3 py-3 font-semibold">{t.job.columns.agent}</th>
+                <th className="px-3 py-3 text-right font-semibold">{t.job.columns.reward}</th>
+                <th className="px-3 py-3 font-semibold">{t.job.columns.status}</th>
+                <th className="px-3 py-3 font-semibold">{t.job.columns.audit}</th>
+                <th className="px-3 py-3 text-right font-semibold">{t.job.columns.time}</th>
+                <th className="px-3 py-3 text-right font-semibold">{t.job.columns.cost}</th>
               </tr>
             </thead>
             <tbody>

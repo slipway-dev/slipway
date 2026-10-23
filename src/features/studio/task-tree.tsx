@@ -67,7 +67,7 @@ function Row({ depth, icon: Icon, name, dim, active, onClick, trailing }: RowPro
         onClick={onClick}
         aria-current={active ? "true" : undefined}
         className={cn(
-          "group relative flex h-8 w-full items-center gap-2 rounded-sm pr-2 text-left font-mono text-code text-ink",
+          "group relative flex h-9 w-full items-center gap-2.5 rounded-lg pr-2 text-left font-mono text-code text-ink",
           "hover:bg-surface focus-visible:z-10",
           active && "bg-surface font-semibold",
         )}
@@ -148,7 +148,7 @@ export function TaskTree({ project, dirName, files, issues, selection, onSelect,
   const others = files.filter((f) => !slotForPath(f.path) && !rootFiles.includes(f))
 
   return (
-    <div className="flex flex-col gap-1 py-3">
+    <div className="flex flex-col gap-2 px-2 py-4">
       <div className="flex items-center justify-between gap-2 pr-2 pl-4">
         <h2 className="flex min-w-0 items-center gap-2 font-mono text-code font-semibold">
           <Folder className="size-4 shrink-0 text-ink-muted" aria-hidden />

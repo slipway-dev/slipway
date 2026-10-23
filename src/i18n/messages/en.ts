@@ -5,11 +5,16 @@
  * Harbor terms (task, environment, verifier, solution, oracle, nop, trial,
  * job, file names) stay in English in every locale; see docs/brand.
  */
+import type { IssueCode } from "@/features/task/issues"
+import type { TrajectoryProblemCode } from "@/features/runs/atif"
+import type { SkipCode } from "@/lib/safe-files"
+
 import { enRuns } from "./en-runs"
+
+type P = Record<string, string | number>
 
 export const en = {
   meta: {
-    title: "Slipway — a visual builder for Harbor tasks",
     description:
       "A web studio for authoring Harbor tasks — write the instruction, assemble the environment and verifier in the browser, then launch a ready-to-run task.",
     studio: "Studio",
@@ -41,22 +46,80 @@ export const en = {
 
   home: {
     tagline: "Build Harbor tasks visually. Launch them anywhere.",
-    lede: "Harbor tasks are just folders: an instruction, a Dockerfile, a test script and an optional solution. Slipway puts the whole folder on one screen. Stack environment and verifier parts, edit every file beside what it generates, and Launch a folder that ",
-    ledeEnd: " takes as-is.",
-    openStudio: "Open Studio",
-    auditRuns: "Audit a job's trajectories",
-    folderCaption: "What Launch writes",
-    folderNotes: {
-      config: "name, timeouts, network policy",
-      instruction: "what the agent is asked to do",
-      dockerfile: "stacked from environment parts",
-      test: "writes /logs/verifier/reward.txt",
-      solve: "run by oracle, so it scores 1",
+    lede: "Slipway puts a whole Harbor task on one screen. Write the instruction, stack environment and verifier parts, watch every file update as you go, then Launch a folder that ",
+    ledeEnd: " runs as-is.",
+    getStarted: "Get started",
+    howItWorks: "How it works",
+    localNote: "Runs entirely in your browser. Nothing is uploaded.",
+    demo: {
+      label: "Interactive demo",
+      hint: "Drag parts to reorder, or switch one off. The Dockerfile and checks follow.",
+      replay: "Replay",
+      generated: "environment/Dockerfile",
+      on: (name: string) => `Use ${name}`,
+      reorder: (name: string) => `Reorder ${name}`,
+      parts: {
+        base: { name: "Base image", detail: "python:3.12-slim" },
+        apt: { name: "apt packages", detail: "jq, sqlite3" },
+        pip: { name: "pip packages", detail: "pandas" },
+        file: { name: "File", detail: "data.csv" },
+      },
+      sectionNote: "FROM stays first however you order parts.",
+      ready: "Ready to Launch",
+      noFrom: "environment/Dockerfile has no FROM line.",
     },
-    thenRun: "Then, in your terminal",
-    expect1: "# expect 1",
-    expect0: "# expect 0",
-    footer: "Slipway is a community tool for Harbor. Harbor-compatible, not an official Harbor project.",
+    features: {
+      heading: "Everything a Harbor task needs, on one screen",
+      compose: {
+        title: "Compose with parts",
+        folder: {
+          config: "name, timeouts, network",
+          instruction: "what the agent is asked",
+          dockerfile: "stacked from parts",
+          test: "writes the reward",
+          solve: "run by oracle",
+        },
+        body: "Base images, packages, files, verifiers and solutions are parts. Stack them, set their parameters, and Slipway writes the Dockerfile, test script and task.toml.",
+      },
+      checks: {
+        title: "Checks that cite Harbor",
+        body: "Validated against Harbor's own task schema, plus the mistakes Harbor would make silently: a verifier that never writes a reward, a solution copied into the image.",
+      },
+      audit: {
+        title: "Audit what agents did",
+        body: "Import a job from harbor run and read each trial step by step. Moves that can fake a reward are flagged, so a passing score is not taken on trust.",
+        flag: "Red flag",
+      },
+      local: {
+        title: "Local by default",
+        body: "Tasks and jobs stay in this browser. A content security policy blocks every outbound request, so your code and keys never leave the page.",
+      },
+    },
+    how: {
+      heading: "How it works",
+      steps: [
+        { title: "Start a task", body: "From the Hello, world starter, a blank scaffold, or an existing task folder." },
+        { title: "Assemble it", body: "Write instruction.md, stack environment parts, pick a verifier and a solution." },
+        { title: "Fix what checks find", body: "Every problem points at the part or file to change." },
+        { title: "Launch and run", body: "Download the folder and run it with oracle and nop." },
+      ],
+      thenRun: "Then, in your terminal",
+      expect1: "# expect 1",
+      expect0: "# expect 0",
+    },
+    cta: {
+      heading: "Build your first task in a few minutes",
+      body: "Open the Hello, world starter and Launch it. It scores 1 with oracle and 0 with nop.",
+    },
+  },
+
+  footer: {
+    product: "Product",
+    resources: "Resources",
+    harborDocs: "Harbor docs",
+    github: "GitHub",
+    createdBy: "Created by",
+    disclaimer: "A community tool for Harbor. Harbor-compatible, not an official Harbor project.",
   },
 
   taskList: {
@@ -103,6 +166,8 @@ export const en = {
       label: "Task folder",
       addFile: "New file",
       newFilePrompt: "Path of the new file, relative to the task root",
+      newFileHint: "For example environment/data.csv. Folders are created as needed; .. is not allowed.",
+      create: "Create file",
       edited: "edited",
       yours: "yours",
       parts: (n: number) => `${n} ${n === 1 ? "part" : "parts"}`,
@@ -211,28 +276,70 @@ export const en = {
 
   runs: enRuns,
 
-  /** Lint and compose messages by rule code. Rules not listed fall back to their English message. */
+  /** Lint and compose messages by issue code; `p` holds Issue.params with part and parameter names already translated. */
   issues: {
-    "task-name": 'Task name must be "org/name", e.g. "my-org/hello-world".',
-    "empty-instruction": "instruction.md is empty; the agent would get no task.",
-    "no-environment": "No environment: add a base image, an environment/Dockerfile or [environment].docker_image.",
-    "dockerfile-from": "environment/Dockerfile has no FROM line.",
-    "solution-leak":
+    "unknown-part": (p: P) => `Part ${p.partId} is not installed.`,
+    "role-conflict": (p: P) => `Only one ${p.role} part can be used; ${p.holder} is already on this task.`,
+    "missing-param": (p: P) => `${p.part}: ${p.param} is required.`,
+    "bad-path": (p: P) => `${p.part} tried to write "${p.path}", which is not allowed.`,
+    "file-conflict": (p: P) => `${p.part} and another part both write ${p.path}.`,
+    "template-error": (p: P) => `${p.part}: ${p.detail}`,
+    schema: (p: P) => `task.toml ${p.path}: ${p.detail}.`,
+    "task-name": () => 'Task name must be "org/name", e.g. "my-org/hello-world".',
+    "empty-instruction": () => "instruction.md is empty; the agent would get no task.",
+    "no-environment": () =>
+      "No environment: add a base image, an environment/Dockerfile or [environment].docker_image.",
+    "dockerfile-from": () => "environment/Dockerfile has no FROM line.",
+    "solution-leak": () =>
       "The Dockerfile copies the solution into the image, so any agent can read it and nop may score above 0.",
-    "tests-leak":
+    "tests-leak": () =>
       "The Dockerfile copies tests into the image; Harbor already copies tests/ to /tests after the agent finishes.",
-    "pip-without-python":
+    "pip-without-python": () =>
       "pip is used on a plain Ubuntu/Debian image, which has no pip. Use a python base image or install python3-pip.",
-    "no-verifier": "No tests/test.sh: add a verifier so Harbor can score the task.",
-    "missing-reward":
+    "no-verifier": () => "No tests/test.sh: add a verifier so Harbor can score the task.",
+    "missing-reward": () =>
       "tests/test.sh never writes /logs/verifier/reward.txt or reward.json, so every trial will fail to score.",
-    "rewards-json": "Harbor reads /logs/verifier/reward.json (singular); rewards.json is ignored.",
-    "verifier-offline":
+    "rewards-json": () => "Harbor reads /logs/verifier/reward.json (singular); rewards.json is ignored.",
+    "verifier-offline": () =>
       "tests/test.sh downloads tools, but the verifier has no network, so every trial scores 0. Let the verifier reach the internet (Network policy) or install test tools in the image.",
-    shebang: "tests/test.sh has no #! line.",
-    "no-solution": "No solution/solve.sh: the oracle agent cannot show the task is solvable.",
-    "empty-solution": "solution/solve.sh has no commands yet, so oracle will score 0.",
-  } as Record<string, string | undefined>,
+    shebang: () => "tests/test.sh has no #! line.",
+    "no-solution": () => "No solution/solve.sh: the oracle agent cannot show the task is solvable.",
+    "empty-solution": () => "solution/solve.sh has no commands yet, so oracle will score 0.",
+  } satisfies Record<IssueCode, (p: P) => string>,
+
+  /** Translated schema failures by Ajv keyword; others show Ajv's own English detail. */
+  schemaKeywords: {
+    type: "has the wrong type",
+    required: "is missing a required field",
+    enum: "is not one of the allowed values",
+    minimum: "is below the minimum",
+    maximum: "is above the maximum",
+    pattern: "has the wrong format",
+    additionalProperties: "has a field Harbor does not know",
+  } as Partial<Record<string, string>>,
+
+  /** Problems reading trajectory.json, by code. */
+  trajectoryProblems: {
+    "invalid-json": (p: P) => `Not valid JSON: ${p.detail}`,
+    "not-atif": () => "Not an ATIF trajectory: it needs an agent object and a steps array.",
+    "unknown-version": (p: P) => `schema_version ${p.version} is newer than Slipway knows (ATIF-v1.8).`,
+    "step-id": (p: P) => `step ${p.index} has step_id ${p.stepId}; ATIF requires 1, 2, 3, ...`,
+    "unknown-call": (p: P) => `step ${p.stepId} has a result for unknown tool call ${p.callId}.`,
+    inSubagent: (subagent: string, text: string) => `subagent ${subagent}: ${text}`,
+  } satisfies Record<TrajectoryProblemCode, (p: P) => string> & Record<string, unknown>,
+
+  /** Files left out of an import, grouped by reason. */
+  skipped: {
+    summary: (total: number, parts: string) => `Skipped ${total} ${total === 1 ? "file" : "files"}: ${parts}.`,
+    join: ", ",
+    "unsafe-path": (n: number) => `${n} with an unsafe path`,
+    "too-large": (n: number, p: P) => `${n} larger than ${p.limitMB} MB`,
+    "too-many-files": (n: number, p: P) => `${n} past the ${p.limit}-file limit`,
+    "over-total": (n: number, p: P) => `${n} past the ${p.limitMB} MB total`,
+    "size-mismatch": (n: number) => `${n} whose size did not match the archive`,
+    "zip-too-large": (n: number, p: P) => `${n} zip larger than ${p.limitMB} MB`,
+    "task-not-imported": (n: number, p: P) => `${n} task not imported (${p.detail})`,
+  } satisfies Record<SkipCode, (n: number, p: P) => string> & Record<string, unknown>,
 
   /**
    * Translations of built-in parts, keyed by part id. English uses the
