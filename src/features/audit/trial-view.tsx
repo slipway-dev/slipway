@@ -16,6 +16,7 @@ import { seconds, trajectoryPath, trialRoot, type TrialSummary } from "@/feature
 import { annotationKey, loadJob, useRuns } from "@/features/runs/store"
 import { downloadBytes } from "@/features/studio/download"
 import { useT } from "@/i18n/provider"
+import { trajectoryProblemText } from "@/i18n/text"
 import { cn } from "@/lib/utils"
 
 import { AnnotationEditor } from "./annotation-editor"
@@ -192,7 +193,8 @@ function FilesTab({ files, trial }: { files: FileSet; trial: string }) {
 }
 
 export function TrialView({ jobId, trialName }: { jobId: string; trialName: string }) {
-  const tr = useT().runs
+  const messages = useT()
+  const tr = messages.runs
   const t = tr.trial
   const job = use(loadJob(jobId))
   const jobName = useRuns((s) => s.jobs[jobId]?.name)
@@ -349,7 +351,7 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
           ) : parsed?.error ? (
             <p className="flex items-center gap-2 text-fail">
               <X className="size-4" aria-hidden />
-              {parsed.error.message}
+              {trajectoryProblemText(messages, parsed.error)}
             </p>
           ) : (
             parsed?.trajectory && (

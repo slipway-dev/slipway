@@ -7,9 +7,10 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { filesFromList, filesFromZip, JOB_LIMITS, type ImportReport } from "@/features/runs/files"
 import { importJobs } from "@/features/runs/store"
-import { describeSkipped, filesFromDrop, filesFromInput, isZip, type PathedFile } from "@/lib/local-files"
+import { filesFromDrop, filesFromInput, isZip, type PathedFile } from "@/lib/local-files"
 import { ImportBudget } from "@/lib/safe-files"
 import { useT } from "@/i18n/provider"
+import { skippedText } from "@/i18n/text"
 import { cn } from "@/lib/utils"
 
 async function reportFrom(files: PathedFile[]): Promise<ImportReport> {
@@ -26,7 +27,8 @@ async function reportFrom(files: PathedFile[]): Promise<ImportReport> {
 }
 
 export function ImportPanel({ onImported }: { onImported: (ids: string[]) => void }) {
-  const t = useT().runs.import
+  const messages = useT()
+  const t = messages.runs.import
   const folderInput = useRef<HTMLInputElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
@@ -41,7 +43,7 @@ export function ImportPanel({ onImported }: { onImported: (ids: string[]) => voi
         toast.error(t.noJob)
         return
       }
-      const skipped = describeSkipped(report.skipped)
+      const skipped = skippedText(messages, report.skipped)
       if (skipped) toast.warning(skipped)
       toast.success(t.imported(ids.length))
       onImported(ids)

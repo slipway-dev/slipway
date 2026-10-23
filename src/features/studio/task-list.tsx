@@ -7,6 +7,7 @@ import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   Dialog,
   DialogContent,
@@ -18,9 +19,10 @@ import {
 import { taskTitle } from "@/features/task/model"
 import { STARTERS } from "@/features/task/starters"
 import { useHydrated, useStudio } from "@/features/task/store"
-import { describeSkipped, filesFromDrop, filesFromInput, type PathedFile } from "@/lib/local-files"
+import { filesFromDrop, filesFromInput, type PathedFile } from "@/lib/local-files"
 import { LOCALE_TAGS } from "@/i18n/config"
 import { useLocale, useT } from "@/i18n/provider"
+import { skippedText } from "@/i18n/text"
 
 import { readTasks } from "./import-tasks"
 
@@ -44,7 +46,7 @@ export function TaskList() {
   async function onImport(pending: Promise<PathedFile[]>) {
     try {
       const { projects, skipped } = await readTasks(await pending)
-      const note = describeSkipped(skipped)
+      const note = skippedText(t, skipped)
       if (note) toast.warning(note)
       if (projects.length === 0) {
         toast.error(tl.nothingImported)
@@ -195,17 +197,20 @@ export function TaskList() {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-ink-muted tabular-nums">{when.format(new Date(project.updatedAt))}</td>
                   <td className="px-2 py-1 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="relative z-10 text-ink-muted hover:text-fail"
-                      aria-label={tl.deleteLabel(taskTitle(project))}
-                      onClick={() => {
-                        if (confirm(tl.confirmDelete(taskTitle(project)))) deleteProject(project.id)
-                      }}
+                    <ConfirmDialog
+                      title={tl.confirmDelete(taskTitle(project))}
+                      confirmLabel={t.common.delete}
+                      onConfirm={() => deleteProject(project.id)}
                     >
-                      <Trash2 />
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative z-10 text-ink-muted hover:text-fail"
+                        aria-label={tl.deleteLabel(taskTitle(project))}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </ConfirmDialog>
                   </td>
                 </tr>
               ))}

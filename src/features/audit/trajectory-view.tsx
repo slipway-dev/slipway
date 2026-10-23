@@ -12,6 +12,7 @@ import type { FileSet } from "@/features/runs/files"
 import type { Step, Trajectory } from "@/features/runs/types"
 
 import { useT } from "@/i18n/provider"
+import { trajectoryProblemText } from "@/i18n/text"
 import { cn } from "@/lib/utils"
 
 import { SeverityGlyph } from "./status"
@@ -40,7 +41,8 @@ interface TrajectoryViewProps {
 }
 
 export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir, files }: TrajectoryViewProps) {
-  const t = useT().runs.trajectory
+  const messages = useT()
+  const t = messages.runs.trajectory
   const tj = useT().runs.job
   const [path, setPath] = useState<string[]>([])
   const [onlyFlagged, setOnlyFlagged] = useState(false)
@@ -111,7 +113,7 @@ export function TrajectoryView({ root, warnings, findings, jobId, trial, baseDir
           </summary>
           <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
             {warnings.map((w, i) => (
-              <li key={`${w.code}-${i}`}>{w.message}</li>
+              <li key={`${w.code}-${i}`}>{trajectoryProblemText(messages, w)}</li>
             ))}
           </ul>
         </details>

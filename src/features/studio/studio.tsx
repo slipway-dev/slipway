@@ -30,6 +30,7 @@ import { GeneratedFiles } from "./generated-files"
 import { SettingsForm } from "./settings-form"
 import { SECTIONS, sectionText, type Selection } from "./slots"
 import { TaskTree } from "./task-tree"
+import { NewFileDialog } from "./new-file-dialog"
 
 type MobileTab = "files" | "edit" | "checks"
 
@@ -164,6 +165,7 @@ export function Studio({ id }: { id: string }) {
   const lookup = usePartLookup()
   const [selection, setSelection] = useState<Selection>({ kind: "instruction" })
   const [mobileTab, setMobileTab] = useState<MobileTab>("edit")
+  const [newFileOpen, setNewFileOpen] = useState(false)
   const wide = useMediaQuery("(min-width: 1024px)")
 
   const composed = useMemo(() => (project ? composeTask(project, lookup) : undefined), [project, lookup])
@@ -205,10 +207,7 @@ export function Studio({ id }: { id: string }) {
     else if (issue.path) select({ kind: "file", path: issue.path })
   }
 
-  function addFile() {
-    const path = prompt(t.studio.tree.newFilePrompt, "environment/")
-    const clean = path?.trim().replace(/^\/+/, "")
-    if (!clean || clean.endsWith("/") || clean.split("/").includes("..")) return
+  function addFile(clean: string) {
     if (!composed!.files.some((f) => f.path === clean)) {
       setOverride(project!.id, clean, { content: "", executable: clean.endsWith(".sh") })
     }
@@ -231,7 +230,7 @@ export function Studio({ id }: { id: string }) {
       issues={issues}
       selection={selection}
       onSelect={select}
-      onAddFile={addFile}
+      onAddFile={() => setNewFileOpen(true)}
     />
   )
   const canvas = (
@@ -249,6 +248,7 @@ export function Studio({ id }: { id: string }) {
 
   return (
     <div className="flex h-dvh flex-col">
+      <NewFileDialog open={newFileOpen} onOpenChange={setNewFileOpen} onCreate={addFile} />
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-paper px-3 lg:px-4">
         <Link
           href="/studio"
