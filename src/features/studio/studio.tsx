@@ -227,9 +227,11 @@ export function Studio({ id }: { id: string }) {
         <div className="min-h-0 flex-1 overflow-y-auto bg-paper">
           <Blueprint
             project={project}
+            files={composed.files}
             issues={issues}
             simulation={simulation}
             lookup={lookup}
+            dirName={dirName}
             animate={!played}
             onPlayed={() => setPlayed(true)}
             onOpen={(part) => setView({ mode: "bench", part })}

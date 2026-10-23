@@ -6,7 +6,7 @@ export const enBench = {
 
   blueprint: {
     title: "Blueprint",
-    lede: "Your task, taken apart. Open a part to work on it.",
+    lede: "Your task, taken apart, with what each part holds right now. Open a part to work on it.",
     replay: "Replay",
     sceneLabel: "Blueprint of the task, split into its parts",
     open: (part: string) => `Open ${part}`,
@@ -25,6 +25,52 @@ export const enBench = {
     /** The simulated rewards shown on the verifier piece. */
     sim: (oracle: string, nop: string) => `oracle ${oracle} · nop ${nop}`,
     simUnknown: "—",
+    openShort: "Open",
+    explode: "Take apart",
+    assemble: "Put together",
+    dragHint: "Drag to turn · click a part to open it",
+    no3d: "The 3D drawing needs WebGL, which this browser has turned off. The parts are all below.",
+    partsLabel: "Parts of the task",
+    more: (n: number) => `+${n} more`,
+    sheet: { task: "Task", drawing: "Drawing", exploded: "Exploded view", scale: "Scale", notToScale: "Not to scale" },
+    kpis: {
+      label: "Task overview",
+      checks: "Checks",
+      checksNote: (n: number) => (n ? plural(n, "issue", "issues") + " to look at" : "Nothing to fix"),
+      expects: (n: number) => `Simulated · expects ${n}`,
+      unverified: "Not simulated",
+      files: "Files",
+      filesNote: "In the exported folder",
+      image: "Base image",
+      imageNote: (n: number) => plural(n, "package", "packages") + " on top",
+    },
+    facts: {
+      words: "Words",
+      lines: "Lines",
+      headings: "Headings",
+      image: "Image",
+      workdir: "Workdir",
+      resources: "Resources",
+      resourceValue: (cpus?: number, memoryMb?: number): string | undefined => {
+        const out = [cpus !== undefined && `${cpus} CPU`, memoryMb !== undefined && `${+(memoryMb / 1024).toFixed(1)} GB`]
+        return out.filter(Boolean).join(" · ") || undefined
+      },
+      network: "Network",
+      files: "Data files",
+      runner: "Uses",
+      reward: "Reward",
+      rewardAll: "All must pass",
+      rewardWeighted: "Weighted",
+      timeout: "Timeout",
+      seconds: (n: number) => `${n} s`,
+      noChecks: "No checks yet.",
+      steps: "Steps",
+      noSteps: "No steps yet.",
+      name: "Name",
+      version: "Version",
+      authors: "Authors",
+      agentTimeout: "Agent timeout",
+    },
   },
 
   workbench: {
