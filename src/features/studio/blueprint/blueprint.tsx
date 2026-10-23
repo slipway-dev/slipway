@@ -139,16 +139,34 @@ function Board({
 
   return (
     <div
-      className="relative h-[clamp(360px,64vh,760px)] w-full overflow-hidden rounded-2xl bg-hull text-hull-ink ring-1 ring-line select-none"
+      className="relative h-[clamp(360px,64vh,760px)] w-full overflow-hidden rounded-2xl text-white ring-1 ring-line select-none"
       style={{
-        backgroundImage:
-          "linear-gradient(oklch(100% 0 0 / 0.045) 1px, transparent 1px), linear-gradient(90deg, oklch(100% 0 0 / 0.045) 1px, transparent 1px), linear-gradient(oklch(100% 0 0 / 0.02) 1px, transparent 1px), linear-gradient(90deg, oklch(100% 0 0 / 0.02) 1px, transparent 1px)",
-        backgroundSize: "120px 120px, 120px 120px, 24px 24px, 24px 24px",
+        // Blueprint paper: deep cyanotype blue, a faint 5 mm grid, a stronger 25 mm grid, and a soft vignette.
+        backgroundColor: "oklch(41% 0.12 256)",
+        backgroundImage: [
+          "radial-gradient(ellipse at 50% 45%, transparent 55%, oklch(30% 0.1 258 / 0.55))",
+          "linear-gradient(oklch(100% 0 0 / 0.16) 1px, transparent 1px)",
+          "linear-gradient(90deg, oklch(100% 0 0 / 0.16) 1px, transparent 1px)",
+          "linear-gradient(oklch(100% 0 0 / 0.06) 1px, transparent 1px)",
+          "linear-gradient(90deg, oklch(100% 0 0 / 0.06) 1px, transparent 1px)",
+        ].join(", "),
+        backgroundSize: "100% 100%, 120px 120px, 120px 120px, 24px 24px, 24px 24px",
       }}
     >
+      {/* Construction lines under the model: centre axes and a compass circle, as drawn before the ship. */}
+      <svg aria-hidden className="pointer-events-none absolute inset-0 size-full">
+        <g stroke="oklch(100% 0 0 / 0.22)" strokeWidth={1} fill="none" strokeDasharray="10 4 2 4">
+          <line x1="0" y1="52%" x2="100%" y2="52%" />
+          <line x1="50%" y1="0" x2="50%" y2="100%" />
+        </g>
+        <g stroke="oklch(100% 0 0 / 0.14)" strokeWidth={1} fill="none">
+          <circle cx="50%" cy="52%" r="34%" />
+          <circle cx="50%" cy="52%" r="22%" strokeDasharray="3 5" />
+        </g>
+      </svg>
       {/* Drawing frame: a margin rule with ticks, like a sheet. */}
-      <div aria-hidden className="pointer-events-none absolute inset-3 rounded-xl border border-white/10" />
-      <div aria-hidden className="pointer-events-none absolute inset-x-3 top-3 flex justify-between px-4 font-mono text-[10px] text-hull-muted/70">
+      <div aria-hidden className="pointer-events-none absolute inset-3 rounded-xl border border-white/35" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-3 top-3 flex justify-between px-4 font-mono text-[10px] text-white/60">
         {"ABCDEFGH".split("").map((c) => (
           <span key={c} className="pt-1">
             {c}
@@ -158,7 +176,7 @@ function Board({
 
       <SceneBoundary
         fallback={
-          <p className="absolute inset-0 flex items-center justify-center p-8 text-center text-body-sm text-hull-muted">
+          <p className="absolute inset-0 flex items-center justify-center p-8 text-center text-body-sm text-white/80">
             {b.no3d}
           </p>
         }
@@ -174,13 +192,13 @@ function Board({
             <polyline
               ref={(el) => void (lines.current[key] = el)}
               fill="none"
-              stroke={hovered === key ? "var(--hull-signal)" : "oklch(100% 0 0 / 0.45)"}
+              stroke={hovered === key ? "var(--hull-signal)" : "oklch(100% 0 0 / 0.7)"}
               strokeWidth={1}
             />
             <circle
               ref={(el) => void (dots.current[key] = el)}
               r={3}
-              fill={hovered === key ? "var(--hull-signal)" : "var(--hull)"}
+              fill={hovered === key ? "var(--hull-signal)" : "oklch(41% 0.12 256)"}
               stroke={hovered === key ? "var(--hull-signal)" : "oklch(100% 0 0 / 0.7)"}
             />
           </g>
@@ -204,12 +222,12 @@ function Board({
             tabIndex={explode > 0.5 ? 0 : -1}
             style={{ opacity: 0 }}
             className={cn(
-              "absolute top-0 left-0 flex items-center gap-2 rounded-lg border bg-hull/90 px-2.5 py-1.5 whitespace-nowrap backdrop-blur-sm transition-[border-color,opacity,visibility] duration-300",
+              "absolute top-0 left-0 flex items-center gap-2 rounded-lg border bg-[oklch(36%_0.11_257/0.9)] px-2.5 py-1.5 whitespace-nowrap backdrop-blur-sm transition-[border-color,opacity,visibility] duration-300",
               explode > 0.5 ? "visible" : "invisible",
-              hovered === key ? "border-hull-signal" : "border-white/15",
+              hovered === key ? "border-hull-signal" : "border-white/40",
             )}
           >
-            <span className={cn("font-mono text-label", hovered === key ? "text-hull-signal" : "text-hull-muted")}>
+            <span className={cn("font-mono text-label", hovered === key ? "text-hull-signal" : "text-white/70")}>
               {num(i)}
             </span>
             <span className="hidden text-body-sm font-semibold sm:inline">{label}</span>
@@ -224,19 +242,19 @@ function Board({
         )
       })}
 
-      <p className="pointer-events-none absolute top-9 left-7 flex items-center gap-2 text-label text-hull-muted">
+      <p className="pointer-events-none absolute top-9 left-7 flex items-center gap-2 text-label text-white/75">
         <Move3d className="size-3.5" aria-hidden />
         {b.dragHint}
       </p>
 
       {/* Title block, lower right, as on a sheet. */}
-      <dl className="pointer-events-none absolute right-6 bottom-6 hidden grid-cols-[auto_auto] border border-white/15 font-mono text-[11px] leading-4 text-hull-muted md:grid">
-        <dt className="border-r border-b border-white/15 px-2 py-1">{b.sheet.task}</dt>
-        <dd className="max-w-56 truncate border-b border-white/15 px-2 py-1 text-hull-ink">{dirName}</dd>
-        <dt className="border-r border-b border-white/15 px-2 py-1">{b.sheet.drawing}</dt>
-        <dd className="border-b border-white/15 px-2 py-1 text-hull-ink">{b.sheet.exploded}</dd>
-        <dt className="border-r border-white/15 px-2 py-1">{b.sheet.scale}</dt>
-        <dd className="px-2 py-1 text-hull-ink">{b.sheet.notToScale}</dd>
+      <dl className="pointer-events-none absolute right-6 bottom-6 hidden grid-cols-[auto_auto] border border-white/50 bg-[oklch(36%_0.11_257/0.6)] font-mono text-[11px] leading-4 text-white/70 md:grid">
+        <dt className="border-r border-b border-white/50 px-2 py-1">{b.sheet.task}</dt>
+        <dd className="max-w-56 truncate border-b border-white/50 px-2 py-1 text-white">{dirName}</dd>
+        <dt className="border-r border-b border-white/50 px-2 py-1">{b.sheet.drawing}</dt>
+        <dd className="border-b border-white/50 px-2 py-1 text-white">{b.sheet.exploded}</dd>
+        <dt className="border-r border-white/50 px-2 py-1">{b.sheet.scale}</dt>
+        <dd className="px-2 py-1 text-white">{b.sheet.notToScale}</dd>
       </dl>
     </div>
   )

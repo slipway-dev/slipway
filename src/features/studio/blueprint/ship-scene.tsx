@@ -21,14 +21,14 @@ import type { SectionKey } from "../slots"
  * It is drawn like a CAD view — flat grey solids with ink edges under an
  * orthographic camera — and comes apart along fixed axes.
  *
- * The board behind it is dark in both themes, so the colours are fixed
+ * The board is blueprint blue in both themes, so the colours are fixed
  * sRGB values rather than the page's OKLCH tokens (three.js cannot read those).
  */
 const INK = new THREE.Color("#0e0e0e")
-const EDGE = new THREE.Color("#d9d9d9")
+const EDGE = new THREE.Color("#f2f7ff")
 const SIGNAL = new THREE.Color("#ff7a3d")
-const TIDE = new THREE.Color("#7cc7dd")
-const TONES = ["#5b5b5b", "#4b4b4b", "#6a6a6a", "#545454"]
+const TIDE = new THREE.Color("#bfe3ff")
+const TONES = ["#2f64a8", "#2a5c9e", "#3570b6", "#2d60a3"]
 
 export const PART_ORDER: readonly SectionKey[] = ["environment", "instruction", "verifier", "solution", "settings"]
 
@@ -123,11 +123,11 @@ function Solid({
           polygonOffsetFactor={1}
           polygonOffsetUnits={1}
           emissive={hot ? SIGNAL : INK}
-          emissiveIntensity={hot ? 0.18 : 0}
+          emissiveIntensity={hot ? 0.22 : 0}
         />
       </mesh>
       <lineSegments geometry={edges}>
-        <lineBasicMaterial color={hot ? SIGNAL : EDGE} transparent opacity={hot ? 1 : 0.78} />
+        <lineBasicMaterial color={hot ? SIGNAL : EDGE} transparent opacity={hot ? 1 : 0.92} />
       </lineSegments>
     </group>
   )
@@ -215,15 +215,15 @@ type Geo = ReturnType<typeof useGeometries>
 function Hull({ g, hot }: { g: Geo; hot: boolean }) {
   return (
     <group>
-      <Solid geometry={g.keel} color="#3f3f3f" position={[0, -0.45, 0]} hot={hot} />
+      <Solid geometry={g.keel} color="#24528f" position={[0, -0.45, 0]} hot={hot} />
       <Solid geometry={g.hull} color={TONES[1]} hot={hot} />
       <Solid geometry={g.boot} color={hot ? SIGNAL : TIDE} position={[0, 0.02, 0]} hot={false} />
-      <Solid geometry={g.deck} color="#727272" position={[0, 1.15, 0]} hot={hot} />
+      <Solid geometry={g.deck} color="#3a78bf" position={[0, 1.15, 0]} hot={hot} />
       {/* Hatch covers the cargo stands on. */}
       {[-2.2, -1.2, -0.2, 0.8, 1.8].map((x) => (
-        <Solid key={x} geometry={g.hatch} color="#626262" position={[x, 1.23, 0]} hot={hot} />
+        <Solid key={x} geometry={g.hatch} color="#3470b5" position={[x, 1.23, 0]} hot={hot} />
       ))}
-      <Solid geometry={g.bulwark} color="#5a5a5a" position={[4.15, 1.29, 0]} scale={[1, 1, 0.8]} hot={hot} />
+      <Solid geometry={g.bulwark} color="#2f66aa" position={[4.15, 1.29, 0]} scale={[1, 1, 0.8]} hot={hot} />
     </group>
   )
 }
@@ -261,9 +261,9 @@ function Bridge({ g, hot }: { g: Geo; hot: boolean }) {
       <Solid geometry={g.wing} position={[0.2, 1.53, -1.5]} hot={hot} />
       <Solid geometry={g.pole} position={[-0.1, 2.35, 0]} scale={[1, 0.85, 1]} hot={hot} />
       <Solid geometry={g.radar} position={[-0.1, 2.55, 0]} rotation={[0, 0.6, 0]} hot={hot} />
-      <Solid geometry={g.dome} position={[-0.35, 2.0, 0.5]} color="#5a5a5a" hot={hot} />
+      <Solid geometry={g.dome} position={[-0.35, 2.0, 0.5]} color="#3f7cc4" hot={hot} />
       <Solid geometry={g.funnel} position={[-0.95, 0.7, 0]} color={TONES[1]} hot={hot} />
-      <Solid geometry={g.funnelBand} position={[-1.02, 0.98, 0]} color={hot ? SIGNAL : "#c9c9c9"} hot={false} />
+      <Solid geometry={g.funnelBand} position={[-1.02, 0.98, 0]} color={hot ? SIGNAL : "#e8f2ff"} hot={false} />
     </group>
   )
 }
@@ -273,14 +273,14 @@ function Propulsion({ g, hot, spin }: { g: Geo; hot: boolean; spin: RefObject<TH
     <group position={[-5.45, 0.05, 0]}>
       <Solid geometry={g.shaft} position={[0.25, 0, 0]} rotation={[0, 0, Math.PI / 2]} hot={hot} />
       <group ref={spin} position={[-0.2, 0, 0]}>
-        <Solid geometry={g.hub} rotation={[0, 0, Math.PI / 2]} color="#5a5a5a" hot={hot} />
-        <Solid geometry={g.cone} position={[-0.3, 0, 0]} rotation={[0, 0, Math.PI / 2]} color="#5a5a5a" hot={hot} />
+        <Solid geometry={g.hub} rotation={[0, 0, Math.PI / 2]} color="#3f7cc4" hot={hot} />
+        <Solid geometry={g.cone} position={[-0.3, 0, 0]} rotation={[0, 0, Math.PI / 2]} color="#3f7cc4" hot={hot} />
         {[0, 1, 2, 3].map((i) => (
           <Solid
             key={i}
             geometry={g.blade}
             rotation={[(i * Math.PI) / 2, 0.35, Math.PI / 2]}
-            color="#6a6a6a"
+            color="#4886cc"
             hot={hot}
           />
         ))}
@@ -296,7 +296,7 @@ function Mast({ g, hot }: { g: Geo; hot: boolean }) {
       <Solid geometry={g.pole} position={[0, 1.1, 0]} scale={[1.3, 2.2, 1.3]} hot={hot} />
       <Solid geometry={g.yard} position={[0, 1.65, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1.4, 1]} hot={hot} />
       <Solid geometry={g.yard} position={[0, 2.05, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 0.9, 1]} hot={hot} />
-      <Solid geometry={g.dome} position={[0, 2.25, 0]} scale={[0.6, 0.6, 0.6]} color={hot ? SIGNAL : "#cfcfcf"} hot={false} />
+      <Solid geometry={g.dome} position={[0, 2.25, 0]} scale={[0.6, 0.6, 0.6]} color={hot ? SIGNAL : "#e8f2ff"} hot={false} />
       <Solid geometry={g.crane} position={[-0.7, 0.6, 0.55]} color={TONES[2]} hot={hot} />
       <Solid geometry={g.jib} position={[-1.3, 1.15, 0.55]} rotation={[0, 0, -0.25]} color={TONES[2]} hot={hot} />
     </group>
@@ -443,7 +443,7 @@ export default function ShipScene(props: ShipSceneProps) {
       <ambientLight intensity={1.2} />
       <directionalLight position={[6, 10, 8]} intensity={2.2} />
       <directionalLight position={[-8, 4, -6]} intensity={0.6} />
-      <gridHelper args={[30, 30, "#333333", "#222222"]} position={[0, -2.4, 0]} />
+      <gridHelper args={[30, 60, "#8fb8ea", "#5f8fcb"]} position={[0, -2.4, 0]} material-transparent material-opacity={0.35} />
       <Model {...props} />
     </Canvas>
   )
