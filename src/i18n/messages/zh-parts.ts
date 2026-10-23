@@ -122,4 +122,14 @@ export const zhParts: Messages["parts"] = {
       content: { label: "内容" },
     },
   },
+  "slipway/checks": {
+    name: "检查",
+    summary: "对文件和命令的一组检查。Slipway 会生成验证脚本，并能在这里不用 Docker 就拿检查去跑 solution。",
+    params: { flow: { label: "检查" } },
+  },
+  "slipway/solution-steps": {
+    name: "步骤",
+    summary: "解决任务的一组步骤：写文件、建文件夹、运行命令。Slipway 会生成 solve.sh，并能在这里把步骤拿去对照检查执行。",
+    params: { flow: { label: "步骤" } },
+  },
 }

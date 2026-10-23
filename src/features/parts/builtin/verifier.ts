@@ -170,6 +170,29 @@ fi
   },
 }
 
+export const checksVerifier: PartManifest = {
+  id: "slipway/checks",
+  version: "1.0.0",
+  name: "Checks",
+  summary:
+    "A list of checks on files and commands. Slipway writes the verifier script and can run the checks against the solution here, without Docker.",
+  slot: "verifier",
+  role: "runner",
+  params: [
+    {
+      key: "flow",
+      label: "Checks",
+      type: "flow",
+      flow: "checks",
+      required: true,
+      default: { nodes: [], reward: "all" },
+    },
+  ],
+  contributes: {
+    files: [{ path: "tests/test.sh", executable: true, template: "{{flow|checks-script}}" }],
+  },
+}
+
 export const verifierEnv: PartManifest = {
   id: "slipway/verifier-env",
   version: "1.0.0",
@@ -181,6 +204,7 @@ export const verifierEnv: PartManifest = {
 }
 
 export const verifierParts = [
+  checksVerifier,
   pytestVerifier,
   scriptVerifier,
   commandVerifier,

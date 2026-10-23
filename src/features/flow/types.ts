@@ -139,7 +139,21 @@ export function createNode(flow: FlowKind, kind: string): FlowNode {
   return node
 }
 
+/** A node of `kind` with the given fields over its defaults. */
+export function makeNode(flow: FlowKind, kind: string, fields: Partial<FlowNode> = {}): FlowNode {
+  return { ...createNode(flow, kind), ...fields }
+}
+
 export type NodeProblem = "unknown-kind" | "required" | "not-absolute" | "root" | "multiline"
+
+/** English for a problem, given the field's name: the fallback text and the source for en. */
+export const PROBLEM_TEXT: Record<NodeProblem, (field: string) => string> = {
+  "unknown-kind": () => "is not a kind Slipway knows",
+  required: (field) => `needs a ${field}`,
+  "not-absolute": (field) => `${field} must be an absolute path, starting with /`,
+  root: (field) => `${field} cannot be the root directory`,
+  multiline: (field) => `${field} must be a single line`,
+}
 
 export interface NodeIssue {
   /** The field with the problem; undefined for a problem with the node itself. */

@@ -9,6 +9,7 @@ import type { IssueCode } from "@/features/task/issues"
 import type { TrajectoryProblemCode } from "@/features/runs/atif"
 import type { SkipCode } from "@/lib/safe-files"
 
+import { enFlow } from "./en-flow"
 import { enRuns } from "./en-runs"
 
 type P = Record<string, string | number>
@@ -144,7 +145,7 @@ export const en = {
     starters: {
       "hello-world": {
         name: "Hello, world",
-        summary: "A complete task: the agent writes one file, the verifier checks it, the solution shows it works.",
+        summary: "A complete task made of checks and steps: the agent writes one file, a check verifies it, the solution shows it works.",
       },
       blank: {
         name: "Blank",
@@ -276,6 +277,8 @@ export const en = {
 
   runs: enRuns,
 
+  flow: enFlow,
+
   /** Lint and compose messages by issue code; `p` holds Issue.params with part and parameter names already translated. */
   issues: {
     "unknown-part": (p: P) => `Part ${p.partId} is not installed.`,
@@ -284,6 +287,7 @@ export const en = {
     "bad-path": (p: P) => `${p.part} tried to write "${p.path}", which is not allowed.`,
     "file-conflict": (p: P) => `${p.part} and another part both write ${p.path}.`,
     "template-error": (p: P) => `${p.part}: ${p.detail}`,
+    "flow-incomplete": (p: P) => `${p.part}: "${p.node}" ${p.detail}.`,
     schema: (p: P) => `task.toml ${p.path}: ${p.detail}.`,
     "task-name": () => 'Task name must be "org/name", e.g. "my-org/hello-world".',
     "empty-instruction": () => "instruction.md is empty; the agent would get no task.",

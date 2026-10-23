@@ -4,6 +4,9 @@ import { parseTaskConfig } from "@/features/harbor/toml"
 import { validateTaskConfig } from "@/features/harbor/validate"
 import { baseImage, mcpServer, resources } from "@/features/parts/builtin/environment"
 import { pytestVerifier } from "@/features/parts/builtin/verifier"
+import { makeNode } from "@/features/flow/types"
+import { validateManifest } from "@/features/parts/manifest"
+import { BUILTIN_PARTS } from "@/features/parts/registry"
 import { createBlock, createLookup } from "@/features/parts/registry"
 
 import { buildTaskZip, importTaskZip } from "../archive"
@@ -25,7 +28,6 @@ describe("composeTask", () => {
       "task.toml",
       "instruction.md",
       "environment/Dockerfile",
-      "tests/expected.txt",
       "tests/test.sh",
       "solution/solve.sh",
     ])
@@ -34,7 +36,10 @@ describe("composeTask", () => {
     )
     expect(file(composed, "tests/test.sh")?.executable).toBe(true)
     expect(file(composed, "solution/solve.sh")?.executable).toBe(true)
-    expect(file(composed, "tests/test.sh")?.content).toContain("actual='/app/hello.txt'")
+    const verifier = file(composed, "tests/test.sh")!.content
+    expect(verifier).toContain("[ -f '/app/hello.txt' ]")
+    expect(verifier).toContain("echo \"$reward\" > '/logs/verifier/reward.txt'")
+    expect(file(composed, "solution/solve.sh")?.content).toContain("cat > '/app/hello.txt' <<'SLIPWAY_EOF'\nHello, world!\nSLIPWAY_EOF")
 
     const toml = file(composed, "task.toml")!.content
     expect(toml.startsWith('schema_version = "1.4"')).toBe(true)
@@ -230,8 +235,8 @@ describe("issue params for translation", () => {
       role: "runner",
       part: "pytest",
       partId: "slipway/pytest",
-      holder: "File matches",
-      holderId: "slipway/file-match",
+      holder: "Checks",
+      holderId: "slipway/checks",
     })
     expect(issues.find((i) => i.code === "missing-param")?.params).toEqual({
       part: "apt packages",
@@ -247,5 +252,62 @@ describe("issue params for translation", () => {
     const schema = lintTask(project, composeTask(project, lookup)).find((i) => i.code === "schema")
     expect(schema?.params).toMatchObject({ path: "agent.timeout_sec", keyword: "type" })
     expect(schema?.message).toMatch(/agent\.timeout_sec/)
+  })
+})
+
+describe("checks and steps parts", () => {
+  const verifierBlock = (project: ReturnType<typeof createStarter>) => project.blocks.verifier[0]
+  const solutionBlock = (project: ReturnType<typeof createStarter>) => project.blocks.solution[0]
+
+  it("are valid manifests", () => {
+    for (const id of ["slipway/checks", "slipway/solution-steps"]) {
+      expect(validateManifest(BUILTIN_PARTS.find((p) => p.id === id)), id).toEqual([])
+    }
+    const bad = validateManifest({
+      ...BUILTIN_PARTS.find((p) => p.id === "slipway/checks"),
+      params: [{ key: "flow", label: "Checks", type: "flow" }],
+    })
+    expect(bad.join("\n")).toMatch(/flow must be "checks" or "steps"/)
+  })
+
+  it("write the verifier and the solution from their lists", () => {
+    const project = createStarter("hello-world")
+    ;(verifierBlock(project).params.flow as { nodes: unknown[] }).nodes.push(
+      makeNode("checks", "file-contains", { path: "/app/hello.txt", text: "world", weight: 2 }),
+    )
+    ;(verifierBlock(project).params.flow as { reward: string }).reward = "weighted"
+    const composed = composeTask(project, lookup)
+    const script = file(composed, "tests/test.sh")!.content
+    expect(script).toContain("possible=$((possible + 2))")
+    expect(script).toContain("scaled=$((earned * 10000 / possible))")
+    expect(file(composed, "tests/test.sh")?.origin).toMatchObject({ kind: "part", partId: "slipway/checks" })
+    expect(file(composed, "solution/solve.sh")?.origin).toMatchObject({ kind: "part", partId: "slipway/solution-steps" })
+    expect(lintTask(project, composed).map((i) => i.code)).toEqual([])
+  })
+
+  it("name the node that is not finished instead of passing it", () => {
+    const project = createStarter("hello-world")
+    const nodes = (verifierBlock(project).params.flow as { nodes: unknown[] }).nodes
+    nodes.push(makeNode("checks", "file-exists", { path: "hello.txt" }))
+    const issue = lintTask(project, composeTask(project, lookup)).find((i) => i.code === "flow-incomplete")
+    expect(issue?.params).toMatchObject({ partId: "slipway/checks", problem: "not-absolute", field: "path" })
+    expect(issue?.blockId).toBe(verifierBlock(project).id)
+    expect(issue?.message).toBe('Checks: "file exists: hello.txt" path must be an absolute path, starting with /.')
+  })
+
+  it("ask for at least one check and one step", () => {
+    const project = createStarter("hello-world")
+    ;(verifierBlock(project).params.flow as { nodes: unknown[] }).nodes.length = 0
+    ;(solutionBlock(project).params.flow as { nodes: unknown[] }).nodes.length = 0
+    const codes = composeTask(project, lookup).issues.map((i) => `${i.code}:${i.params?.paramKey}`)
+    expect(codes).toEqual(["missing-param:flow", "missing-param:flow"])
+  })
+
+  it("survive Launch and import as they are", () => {
+    const project = createStarter("hello-world")
+    const composed = composeTask(project, lookup)
+    const [imported] = importTaskZip(buildTaskZip("hello", composed.files)).projects
+    const again = composeTask(imported, lookup)
+    expect(again.files.find((f) => f.path === "tests/test.sh")?.content).toBe(file(composed, "tests/test.sh")!.content)
   })
 })

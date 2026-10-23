@@ -56,3 +56,16 @@ describe("negotiateLocale", () => {
     expect(negotiateLocale(null)).toBe("en")
   })
 })
+
+describe("flow-incomplete", () => {
+  it("is translated with the field and the problem", () => {
+    const issue: Issue = {
+      severity: "error",
+      code: "flow-incomplete",
+      message: "English fallback",
+      params: { part: "Checks", partId: "slipway/checks", node: "file exists: x", nodeId: "n", problem: "not-absolute", field: "path" },
+    }
+    expect(issueText(getMessages("en"), issue)).toBe('Checks: "file exists: x" path must be an absolute path, starting with /.')
+    expect(issueText(getMessages("zh"), issue)).toBe("检查：「file exists: x」路径必须是以 / 开头的绝对路径。")
+  })
+})

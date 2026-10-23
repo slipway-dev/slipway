@@ -1,5 +1,6 @@
 import type { Messages } from "./en"
 import { zhParts } from "./zh-parts"
+import { zhFlow } from "./zh-flow"
 import { zhRuns } from "./zh-runs"
 
 /**
@@ -137,7 +138,7 @@ export const zh: Messages = {
     starters: {
       "hello-world": {
         name: "Hello, world",
-        summary: "一个完整的 task：agent 写一个文件，verifier 检查它，solution 证明它能通过。",
+        summary: "一个由检查和步骤搭成的完整 task：agent 写一个文件，一项检查验证它，solution 证明它能通过。",
       },
       blank: {
         name: "空白",
@@ -266,6 +267,8 @@ export const zh: Messages = {
 
   runs: zhRuns,
 
+  flow: zhFlow,
+
   issues: {
     "unknown-part": (p) => `部件 ${p.partId} 未安装。`,
     "role-conflict": (p) => `同一 task 只能有一个 ${p.role} 部件；已经有「${p.holder}」了。`,
@@ -273,6 +276,7 @@ export const zh: Messages = {
     "bad-path": (p) => `${p.part} 试图写入「${p.path}」，这是不允许的。`,
     "file-conflict": (p) => `${p.part} 和另一个部件都写入了 ${p.path}。`,
     "template-error": (p) => `${p.part}：${p.detail}`,
+    "flow-incomplete": (p) => `${p.part}：「${p.node}」${p.detail}。`,
     schema: (p) => `task.toml ${p.path}：${p.detail}。`,
     "task-name": () => "Task 名称必须是「org/name」格式，例如「my-org/hello-world」。",
     "empty-instruction": () => "instruction.md 为空，agent 拿不到任何任务。",

@@ -29,6 +29,11 @@ export function issueText(t: Messages, issue: Issue): string {
     if (issue.code === "schema" && typeof p.keyword === "string") {
       p.detail = t.schemaKeywords[p.keyword] ?? p.detail
     }
+    if (issue.code === "flow-incomplete") {
+      const field = typeof p.field === "string" ? (t.flow.fields[p.field] ?? p.field) : ""
+      const problem = t.flow.problems[p.problem as keyof typeof t.flow.problems]
+      p.detail = problem ? problem(field) : String(p.problem)
+    }
   }
   return t.issues[issue.code](p)
 }

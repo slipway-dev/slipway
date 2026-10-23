@@ -1,3 +1,5 @@
+import type { FlowKind, FlowValue } from "@/features/flow/types"
+
 /**
  * A part is a reusable piece of a Harbor task: a base image, a set of apt
  * packages, a pytest verifier, a solve script. Parts are plain JSON so that
@@ -35,6 +37,8 @@ export type ParamType =
   | "enum"
   | "list"
   | "map"
+  /** An ordered list of checks or steps; see features/flow. */
+  | "flow"
 
 export type ParamValue =
   | string
@@ -42,6 +46,7 @@ export type ParamValue =
   | boolean
   | string[]
   | Record<string, string>
+  | FlowValue
 
 export interface ParamSpec {
   key: string
@@ -57,6 +62,8 @@ export interface ParamSpec {
   suggestions?: string[]
   /** Editor language for "code": "bash", "python", "markdown", "json", ... */
   language?: string
+  /** For "flow": whether the list holds verifier checks or solution steps. */
+  flow?: FlowKind
 }
 
 export interface FileContribution {

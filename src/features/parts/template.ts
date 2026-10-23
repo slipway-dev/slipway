@@ -1,3 +1,6 @@
+import { compileChecks, compileSteps } from "@/features/flow/compile"
+import { isFlowValue } from "@/features/flow/types"
+
 import type { ParamValue } from "./types"
 
 /**
@@ -8,6 +11,8 @@ import type { ParamValue } from "./types"
  *   {{name|lines}}              list joined with newlines
  *   {{name|quote}}              POSIX single-quoted
  *   {{name|json}}               JSON-encoded
+ *   {{flow|checks-script}}      a list of checks as the verifier's bash (features/flow)
+ *   {{flow|steps-script}}       a list of steps as the solution's bash
  *   {{#if name}}…{{else}}…{{/if}}   truthy: non-empty string/list/map, true, non-zero
  *   {{#unless name}}…{{/unless}}
  *   {{#each name}}…{{.}}…{{/each}}  over a list; {{@key}} {{.}} over a map
@@ -19,11 +24,14 @@ const FILTERS: Record<string, (value: ParamValue | undefined) => string> = {
   lines: (v) => (Array.isArray(v) ? v.join("\n") : str(v)),
   quote: (v) => `'${str(v).replace(/'/g, `'\\''`)}'`,
   json: (v) => JSON.stringify(v ?? null),
+  "checks-script": (v) => (isFlowValue(v) ? compileChecks(v.nodes, { mode: v.reward }) : compileChecks([])),
+  "steps-script": (v) => (isFlowValue(v) ? compileSteps(v.nodes) : compileSteps([])),
 }
 
 function str(value: ParamValue | undefined): string {
   if (value === undefined) return ""
   if (Array.isArray(value)) return value.join(" ")
+  if (isFlowValue(value)) return ""
   if (typeof value === "object") {
     return Object.entries(value)
       .map(([k, v]) => `${k}=${v}`)
@@ -35,6 +43,7 @@ function str(value: ParamValue | undefined): string {
 export function isTruthy(value: ParamValue | undefined): boolean {
   if (value === undefined) return false
   if (Array.isArray(value)) return value.length > 0
+  if (isFlowValue(value)) return value.nodes.length > 0
   if (typeof value === "object") return Object.keys(value).length > 0
   if (typeof value === "string") return value.trim().length > 0
   if (typeof value === "number") return value !== 0
@@ -112,7 +121,7 @@ function renderNodes(nodes: Node[], scope: TemplateScope): string {
       const value = scope[node.name]
       if (Array.isArray(value)) {
         for (const item of value) out += renderNodes(node.body, { ...scope, ".": item })
-      } else if (value && typeof value === "object") {
+      } else if (value && typeof value === "object" && !isFlowValue(value)) {
         for (const [key, item] of Object.entries(value)) {
           out += renderNodes(node.body, { ...scope, ".": item, "@key": key })
         }
