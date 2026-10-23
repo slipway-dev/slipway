@@ -15,6 +15,24 @@ Harbor tasks are just folders — an instruction, a Dockerfile, a test script an
 
 Slipway is a community tool for Harbor. It is Harbor-compatible, not an official Harbor project.
 
+## Status
+
+Early. Slipway Studio builds, checks and launches tasks entirely in your browser; tasks are saved locally. Running evaluations and auditing trajectories come next — see [docs/architecture.md](docs/architecture.md).
+
+## Development
+
+Requires Node 22 and pnpm 10.
+
+```sh
+pnpm install
+pnpm dev          # http://localhost:3000
+pnpm test         # unit tests
+pnpm typecheck
+pnpm lint
+```
+
+Slipway validates `task.toml` against the JSON Schema of a pinned Harbor release. To update it, bump the version in `scripts/sync-harbor-schema.sh` and `src/features/harbor/constants.ts`, then run `pnpm harbor:schema` (needs [uv](https://docs.astral.sh/uv/)).
+
 ## Contributing
 
 Naming, copy and visual guidelines for contributors live in [`docs/brand/`](docs/brand/README.md).

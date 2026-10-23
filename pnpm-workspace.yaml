@@ -1,0 +1,9 @@
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
+minimumReleaseAge: 20160
+# Security patches for Next.js may be newer than minimumReleaseAge allows.
+minimumReleaseAgeExclude:
+  - next
+  - "@next/*"
+  - eslint-config-next

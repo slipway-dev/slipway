@@ -1,0 +1,172 @@
+import { describe, expect, it } from "vitest"
+
+import { parseTaskConfig } from "@/features/harbor/toml"
+import { validateTaskConfig } from "@/features/harbor/validate"
+import { baseImage, mcpServer, resources } from "@/features/parts/builtin/environment"
+import { pytestVerifier } from "@/features/parts/builtin/verifier"
+import { createBlock, createLookup } from "@/features/parts/registry"
+
+import { buildTaskZip, importTaskZip } from "../archive"
+import { composeTask } from "../compose"
+import { lintTask } from "../lint"
+import { taskDirName } from "../model"
+import { createStarter } from "../starters"
+
+const lookup = createLookup()
+
+function file(composed: ReturnType<typeof composeTask>, path: string) {
+  return composed.files.find((f) => f.path === path)
+}
+
+describe("composeTask", () => {
+  it("builds the hello-world starter as a complete Harbor task", () => {
+    const composed = composeTask(createStarter("hello-world"), lookup)
+    expect(composed.files.map((f) => f.path)).toEqual([
+      "task.toml",
+      "instruction.md",
+      "environment/Dockerfile",
+      "tests/expected.txt",
+      "tests/test.sh",
+      "solution/solve.sh",
+    ])
+    expect(file(composed, "environment/Dockerfile")?.content).toBe(
+      "FROM ubuntu:24.04\n\nWORKDIR /app\n",
+    )
+    expect(file(composed, "tests/test.sh")?.executable).toBe(true)
+    expect(file(composed, "solution/solve.sh")?.executable).toBe(true)
+    expect(file(composed, "tests/test.sh")?.content).toContain("actual='/app/hello.txt'")
+
+    const toml = file(composed, "task.toml")!.content
+    expect(toml.startsWith('schema_version = "1.4"')).toBe(true)
+    expect(toml).toContain("timeout_sec = 900.0")
+    expect(parseTaskConfig(toml).task?.name).toBe("my-org/hello-world")
+  })
+
+  it("passes lint with no errors or warnings", () => {
+    const project = createStarter("hello-world")
+    expect(lintTask(project, composeTask(project, lookup))).toEqual([])
+  })
+
+  it("orders Dockerfile sections regardless of block order", () => {
+    const project = createStarter("blank")
+    project.blocks.environment = [
+      createBlock(lookup("slipway/run-commands")!, { script: "make" }),
+      createBlock(lookup("slipway/apt-packages")!, { packages: ["make"] }),
+      createBlock(baseImage, { image: "debian:bookworm-slim", workdir: "" }),
+    ]
+    const dockerfile = file(composeTask(project, lookup), "environment/Dockerfile")!.content
+    expect(dockerfile.indexOf("FROM")).toBe(0)
+    expect(dockerfile).not.toContain("WORKDIR")
+    expect(dockerfile.indexOf("apt-get")).toBeLessThan(dockerfile.indexOf("RUN <<'EOF'"))
+  })
+
+  it("merges config contributions and drops empty values", () => {
+    const project = createStarter("hello-world")
+    project.blocks.environment.push(
+      createBlock(resources, { cpus: 2, memory_mb: 4096 }),
+      createBlock(mcpServer, { name: "docs", url: "http://localhost:8000/mcp" }),
+      createBlock(mcpServer, { name: "fs", transport: "stdio", command: "mcp-fs" }),
+    )
+    const { config } = composeTask(project, lookup)
+    expect(config.environment).toMatchObject({ cpus: 2, memory_mb: 4096, build_timeout_sec: 600 })
+    expect(config.environment).not.toHaveProperty("gpus")
+    expect(config.environment?.mcp_servers).toEqual([
+      { name: "docs", transport: "streamable-http", url: "http://localhost:8000/mcp" },
+      { name: "fs", transport: "stdio", command: "mcp-fs" },
+    ])
+    expect(validateTaskConfig(config)).toEqual([])
+  })
+
+  it("flags two parts with the same role", () => {
+    const project = createStarter("hello-world")
+    project.blocks.verifier.push(createBlock(pytestVerifier))
+    const composed = composeTask(project, lookup)
+    expect(composed.issues.map((i) => i.code)).toContain("role-conflict")
+  })
+
+  it("lets a hand edit replace generated content", () => {
+    const project = createStarter("hello-world")
+    project.overrides["environment/Dockerfile"] = { content: "FROM alpine\n" }
+    const dockerfile = file(composeTask(project, lookup), "environment/Dockerfile")!
+    expect(dockerfile.content).toBe("FROM alpine\n")
+    expect(dockerfile.origin.kind).toBe("override")
+    expect(dockerfile.replaces).toEqual({ kind: "generated", by: "dockerfile" })
+  })
+})
+
+describe("lintTask", () => {
+  it("explains what a blank task still needs", () => {
+    const project = createStarter("blank")
+    const codes = lintTask(project, composeTask(project, lookup)).map((i) => i.code)
+    expect(codes).toEqual(["empty-instruction", "empty-solution"])
+  })
+
+  it("catches a verifier that never writes a reward", () => {
+    const project = createStarter("blank")
+    project.instruction = "Do it."
+    project.overrides["tests/test.sh"] = { content: "#!/bin/bash\necho rewards.json\n" }
+    const codes = lintTask(project, composeTask(project, lookup)).map((i) => i.code)
+    expect(codes).toContain("missing-reward")
+    expect(codes).toContain("rewards-json")
+  })
+
+  it("reports task.toml values Harbor's schema rejects", () => {
+    const project = createStarter("hello-world")
+    project.config.agent = { timeout_sec: "soon" as unknown as number }
+    const issues = lintTask(project, composeTask(project, lookup))
+    expect(issues.find((i) => i.code === "schema")?.message).toMatch(/agent\.timeout_sec/)
+  })
+
+  it("catches a verifier that needs the network it does not have", () => {
+    const project = createStarter("hello-world")
+    project.blocks.verifier = [createBlock(pytestVerifier)]
+    const network = createBlock(lookup("slipway/network")!, { verifier_online: false })
+    project.blocks.environment.push(network)
+    const codes = () => lintTask(project, composeTask(project, lookup)).map((i) => i.code)
+    expect(codes()).toContain("verifier-offline")
+
+    network.params.verifier_online = true
+    expect(codes()).not.toContain("verifier-offline")
+    expect(composeTask(project, lookup).config.verifier?.network_mode).toBe("public")
+  })
+
+  it("catches a solution copied into the image", () => {
+    const project = createStarter("hello-world")
+    project.overrides["environment/Dockerfile"] = {
+      content: "FROM ubuntu:24.04\nCOPY solution/solve.sh /app/\n",
+    }
+    const codes = lintTask(project, composeTask(project, lookup)).map((i) => i.code)
+    expect(codes).toContain("solution-leak")
+  })
+})
+
+describe("archive", () => {
+  it("round-trips a launched task through import", () => {
+    const project = createStarter("hello-world")
+    const composed = composeTask(project, lookup)
+    const zip = buildTaskZip(taskDirName(project), composed.files)
+
+    const imported = importTaskZip(zip)
+    const recomposed = composeTask(imported, lookup)
+    const contents = (c: typeof composed) =>
+      Object.fromEntries(c.files.map((f) => [f.path, [f.content, f.executable]]))
+    expect(contents(recomposed)).toEqual(contents(composed))
+    expect(imported.config.task?.name).toBe("my-org/hello-world")
+  })
+
+  it("rejects archives without task.toml", async () => {
+    const { zipSync, strToU8 } = await import("fflate")
+    const zip = zipSync({ "x/readme.md": strToU8("hi") })
+    expect(() => importTaskZip(zip)).toThrow(/No task.toml/)
+  })
+})
+
+describe("cleared params", () => {
+  it("drops a cleared number instead of falling back to its default", () => {
+    const project = createStarter("hello-world")
+    project.blocks.environment.push(createBlock(resources, { cpus: "" }))
+    const { config } = composeTask(project, lookup)
+    expect(config.environment).not.toHaveProperty("cpus")
+    expect(config.environment?.memory_mb).toBe(2048)
+  })
+})
