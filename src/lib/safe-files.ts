@@ -16,8 +16,24 @@ export interface ImportLimits {
   maxFiles: number
 }
 
+/** Why a file was left out of an import; the UI translates by code. */
+export const SKIP_CODES = [
+  "unsafe-path",
+  "too-large", // { limitMB }
+  "too-many-files", // { limit }
+  "over-total", // { limitMB }
+  "size-mismatch",
+  "zip-too-large", // { limitMB }
+  "task-not-imported", // { detail }
+] as const
+
+export type SkipCode = (typeof SKIP_CODES)[number]
+
 export interface Skipped {
   path: string
+  code: SkipCode
+  params?: Record<string, string | number>
+  /** English text, used when no translation exists. */
   reason: string
 }
 
@@ -43,7 +59,8 @@ export function isIgnoredPath(path: string): boolean {
 }
 
 const MB = 1024 * 1024
-export const formatMB = (bytes: number) => `${Math.round((bytes / MB) * 10) / 10} MB`
+export const toMB = (bytes: number) => Math.round((bytes / MB) * 10) / 10
+export const formatMB = (bytes: number) => `${toMB(bytes)} MB`
 
 /** Admits files one at a time against the limits and records why others were dropped. */
 export class ImportBudget {
@@ -58,20 +75,35 @@ export class ImportBudget {
     if (rawPath.endsWith("/")) return undefined
     const path = safeRelativePath(rawPath)
     if (!path) {
-      this.skipped.push({ path: rawPath, reason: "unsafe path" })
+      this.skipped.push({ path: rawPath, code: "unsafe-path", reason: "unsafe path" })
       return undefined
     }
     if (isIgnoredPath(path)) return undefined
     if (size > this.limits.maxFileBytes) {
-      this.skipped.push({ path, reason: `larger than ${formatMB(this.limits.maxFileBytes)}` })
+      this.skipped.push({
+        path,
+        code: "too-large",
+        params: { limitMB: toMB(this.limits.maxFileBytes) },
+        reason: `larger than ${formatMB(this.limits.maxFileBytes)}`,
+      })
       return undefined
     }
     if (this.count >= this.limits.maxFiles) {
-      this.skipped.push({ path, reason: `more than ${this.limits.maxFiles} files` })
+      this.skipped.push({
+        path,
+        code: "too-many-files",
+        params: { limit: this.limits.maxFiles },
+        reason: `more than ${this.limits.maxFiles} files`,
+      })
       return undefined
     }
     if (this.total + size > this.limits.maxTotalBytes) {
-      this.skipped.push({ path, reason: `import over ${formatMB(this.limits.maxTotalBytes)}` })
+      this.skipped.push({
+        path,
+        code: "over-total",
+        params: { limitMB: toMB(this.limits.maxTotalBytes) },
+        reason: `import over ${formatMB(this.limits.maxTotalBytes)}`,
+      })
       return undefined
     }
     this.total += size
@@ -103,7 +135,7 @@ export function unzipWithin(
     const path = admitted.get(name)
     if (!path) continue
     if (bytes.byteLength > limits.maxFileBytes) {
-      budget.skipped.push({ path, reason: "size did not match the archive's header" })
+      budget.skipped.push({ path, code: "size-mismatch", reason: "size did not match the archive's header" })
       continue
     }
     out.set(path, bytes)

@@ -337,7 +337,7 @@ export function TrialView({ jobId, trialName }: { jobId: string; trialName: stri
           ) : trajectoryText === undefined ? (
             <p className="text-body-sm text-ink-muted">Loading trajectory…</p>
           ) : parsed?.error ? (
-            <p className="text-fail">✕ {parsed.error}</p>
+            <p className="text-fail">✕ {parsed.error.message}</p>
           ) : (
             parsed?.trajectory && (
               <TrajectoryView

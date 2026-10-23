@@ -97,7 +97,12 @@ export function importTaskFiles(files: Map<string, Uint8Array>, skipped: Skipped
         }
       }
     } catch (error) {
-      skipped.push({ path: label, reason: `not imported: ${(error as Error).message}` })
+      skipped.push({
+        path: label,
+        code: "task-not-imported",
+        params: { detail: (error as Error).message },
+        reason: `not imported: ${(error as Error).message}`,
+      })
       continue
     }
     delete project.config.schema_version

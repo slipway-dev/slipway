@@ -3,7 +3,7 @@
  * byte anywhere; callers keep the files in memory or IndexedDB.
  */
 
-import { formatMB, type Skipped } from "./safe-files"
+import { formatMB, type SkipCode, type Skipped } from "./safe-files"
 
 export type PathedFile = [path: string, file: File]
 
@@ -42,12 +42,30 @@ export function isZip(file: File): boolean {
   return file.name.toLowerCase().endsWith(".zip")
 }
 
-/** One line for a toast: "Skipped 3 files: 2 larger than 25 MB, 1 unsafe path." */
+export interface SkippedGroup {
+  code: SkipCode
+  params?: Record<string, string | number>
+  count: number
+  /** English reason, for the fallback text. */
+  reason: string
+}
+
+/** Skipped files grouped by code and params, for a translated summary. */
+export function groupSkipped(skipped: Skipped[]): SkippedGroup[] {
+  const groups = new Map<string, SkippedGroup>()
+  for (const s of skipped) {
+    const key = s.code + JSON.stringify(s.params ?? {})
+    const group = groups.get(key)
+    if (group) group.count += 1
+    else groups.set(key, { code: s.code, params: s.params, count: 1, reason: s.reason })
+  }
+  return [...groups.values()]
+}
+
+/** English fallback for a toast: "Skipped 3 files: 2 larger than 25 MB, 1 unsafe path." */
 export function describeSkipped(skipped: Skipped[]): string | undefined {
   if (skipped.length === 0) return undefined
-  const byReason = new Map<string, number>()
-  for (const s of skipped) byReason.set(s.reason, (byReason.get(s.reason) ?? 0) + 1)
-  const parts = [...byReason].map(([reason, n]) => `${n} ${reason}`)
+  const parts = groupSkipped(skipped).map((g) => `${g.count} ${g.reason}`)
   return `Skipped ${skipped.length} ${skipped.length === 1 ? "file" : "files"}: ${parts.join(", ")}.`
 }
 

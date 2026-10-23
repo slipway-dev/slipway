@@ -106,7 +106,7 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
   let config: TaskConfig = deepMerge({}, project.config)
 
   for (const slot of SLOT_IDS) {
-    const roles = new Map<string, string>()
+    const roles = new Map<string, { name: string; id: string }>()
     for (const block of project.blocks[slot] ?? []) {
       if (block.disabled) continue
       const part = lookup(block.partId)
@@ -115,6 +115,7 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
           severity: "error",
           code: "unknown-part",
           message: `Part ${block.partId} is not installed.`,
+          params: { partId: block.partId },
           blockId: block.id,
         })
         continue
@@ -125,12 +126,13 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
           issues.push({
             severity: "error",
             code: "role-conflict",
-            message: `Only one ${part.role} part can be used; ${holder} is already on this task.`,
+            message: `Only one ${part.role} part can be used; ${holder.name} is already on this task.`,
+            params: { role: part.role, part: part.name, partId: part.id, holder: holder.name, holderId: holder.id },
             blockId: block.id,
           })
           continue
         }
-        roles.set(part.role, part.name)
+        roles.set(part.role, { name: part.name, id: part.id })
       }
 
       const scope: TemplateScope = { ...defaultParams(part), ...block.params }
@@ -143,6 +145,7 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
             severity: "error",
             code: "missing-param",
             message: `${part.name}: ${spec.label} is required.`,
+            params: { part: part.name, partId: part.id, param: spec.label, paramKey: spec.key },
             blockId: block.id,
           })
         }
@@ -159,6 +162,7 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
               severity: "error",
               code: "bad-path",
               message: `${part.name} tried to write "${path}", which is not allowed.`,
+              params: { part: part.name, partId: part.id, path },
               blockId: block.id,
             })
             continue
@@ -168,6 +172,7 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
               severity: "error",
               code: "file-conflict",
               message: `${part.name} and another part both write ${path}.`,
+              params: { part: part.name, partId: part.id, path },
               path,
               blockId: block.id,
             })
@@ -188,6 +193,7 @@ export function composeTask(project: TaskProject, lookup: PartLookup): ComposedT
           severity: "error",
           code: "template-error",
           message: `${part.name}: ${(error as Error).message}`,
+          params: { part: part.name, partId: part.id, detail: (error as Error).message },
           blockId: block.id,
         })
       }

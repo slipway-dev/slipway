@@ -25,6 +25,7 @@ export function lintTask(project: TaskProject, composed: ComposedTask): Issue[] 
       severity: "error",
       code: "schema",
       message: `task.toml ${error.path} ${error.message}.`,
+      params: { path: error.path, keyword: error.keyword, detail: error.message },
       path: TASK_PATHS.config,
     })
   }

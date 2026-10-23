@@ -153,11 +153,14 @@ describe("ATIF", () => {
       }),
     )
     expect(parsed.trajectory?.steps).toHaveLength(2)
-    expect(parsed.warnings.join("\n")).toMatch(/newer than Slipway knows/)
-    expect(parsed.warnings.join("\n")).toMatch(/step_id 3/)
-    expect(parsed.warnings.join("\n")).toMatch(/unknown tool call missing/)
-    expect(parseTrajectory("{}").error).toMatch(/Not an ATIF trajectory/)
-    expect(parseTrajectory("nope").error).toMatch(/Not valid JSON/)
+    expect(parsed.warnings).toEqual([
+      expect.objectContaining({ code: "unknown-version", params: { version: "ATIF-v2.0" } }),
+      expect.objectContaining({ code: "step-id", params: { index: 2, stepId: 3 } }),
+      expect.objectContaining({ code: "unknown-call", params: { stepId: 3, callId: "missing" } }),
+    ])
+    expect(parsed.warnings[1].message).toMatch(/step_id 3/)
+    expect(parseTrajectory("{}").error).toMatchObject({ code: "not-atif" })
+    expect(parseTrajectory("nope").error).toMatchObject({ code: "invalid-json", message: expect.stringMatching(/Not valid JSON/) })
   })
 })
 
@@ -234,5 +237,22 @@ describe("parseCtrf", () => {
     expect(report?.tool).toBe("pytest")
     expect(report?.tests.map((t) => t.status)).toEqual(["failed", "failed"])
     expect(parseCtrf({})).toBeUndefined()
+  })
+})
+
+describe("trajectory problems in subagents", () => {
+  it("name the subagent in params", () => {
+    const parsed = parseTrajectory(
+      JSON.stringify({
+        agent: { name: "root" },
+        steps: [{ step_id: 1, source: "user", message: "" }],
+        subagent_trajectories: [
+          { trajectory_id: "helper", agent: { name: "sub" }, steps: [{ step_id: 2, source: "agent", message: "" }] },
+        ],
+      }),
+    )
+    expect(parsed.warnings).toEqual([
+      { code: "step-id", message: expect.stringMatching(/^subagent helper: /), params: { index: 1, stepId: 2, subagent: "helper" } },
+    ])
   })
 })

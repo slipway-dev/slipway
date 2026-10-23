@@ -2,9 +2,20 @@ import type { Step, ToolCall, Trajectory } from "./types"
 
 export type FindingSeverity = "error" | "warning" | "info"
 
+/**
+ * Every audit rule. The UI translates a finding by its rule; messages are
+ * fixed per rule, so there are no params. `evidence` is the agent's own
+ * text and is never translated.
+ */
+export const FINDING_RULES = ["solution-access", "reward-write", "tests-probe", "git-history", "test-edit"] as const
+
+export type FindingRule = (typeof FINDING_RULES)[number]
+
 export interface Finding {
-  rule: string
+  /** Stable id for the rule, and the translation key. */
+  rule: FindingRule
   severity: FindingSeverity
+  /** English text, used when no translation exists. */
   message: string
   stepId: number
   /** "" for the root trajectory, else the subagent's trajectory_id. */
@@ -15,7 +26,7 @@ export interface Finding {
 }
 
 interface Rule {
-  id: string
+  id: FindingRule
   severity: FindingSeverity
   message: string
   /** Matched against each string in a tool call's arguments. */
